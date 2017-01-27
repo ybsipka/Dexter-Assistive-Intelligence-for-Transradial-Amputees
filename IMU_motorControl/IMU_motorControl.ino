@@ -29,7 +29,7 @@ char buffer[MAX_OUT_CHARS + 1];
 int t_pos, c_pos,error;
 int pwm = 0;
 int flag = 0;
-double xAngle,yAngle,zAngle,xAngleInit,yAngleInit,zAngleInit,xAngleOld;
+int xAngle,yAngle,zAngle,xAngleInit,yAngleInit,zAngleInit,xAngleOld;
 int IMU_turn;
 int pot_target;
 
@@ -102,25 +102,19 @@ void loop()
   //old = 150 new = 100 turn = 50   right = -50 turn backward -> abs()
   //old = 40 new = 350   turn = -310  right = 310  turn forward  -> abs()
   //old = 355 new = 35  turn = 320  right = 40  turn forward  -> -360 (-)
-    xAngle = euler.x();
+    xAngle = euler.x()+ 180;
+    if(xAngle > 360){xAngle = xAngle %360;}
+    
     c_pos = analogRead(0);
     
     IMU_turn = xAngleOld - xAngle;
-    Serial.print("IMU turn old");
-    Serial.print(IMU_turn);
-    if(xAngle > xAngleOld){
-      IMU_turn = abs(IMU_turn);
-      if(IMU_turn > 300){
-        IMU_turn = -(360%IMU_turn);
-      }
-    }else if(xAngle < xAngleOld){
-      IMU_turn = -IMU_turn;
-      if(IMU_turn > 300){
-        IMU_turn = 360%IMU_turn;
-      }
+    if(IMU_turn > 0){
+      //counter clockwise
     }
-     Serial.print(" IMU turned  ");
-     Serial.print(IMU_turn);
+    else{
+      //clockwise
+    }
+    
     pot_target = c_pos + IMU_turn*2.841;
     if(pot_target > 1023){
       pot_target = pot_target -1023;
@@ -134,7 +128,7 @@ void loop()
     sprintf(buffer, "Input= %d\n",c_pos);
     Serial.print(buffer); 
     
-    xAngleOld = euler.x(); 
+    xAngleOld = xAngle; 
     delay(BNO055_SAMPLERATE_DELAY_MS);
     
     }
