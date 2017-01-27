@@ -18,7 +18,7 @@ Motor_PinA - Motor_pinB - Ground
     Red         Black       
 */    
 /**************** VARIABLES *******************/
-#define kP 0.3
+#define kP 1.5
 #define ERROR_MARGIN 5
 #define TARGET_POSITION 1000
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -104,10 +104,12 @@ void loop()
   //old = 355 new = 35  turn = 320  right = 40  turn forward  -> -360 (-)
     xAngle = euler.x()+ 180;
     if(xAngle > 360){xAngle = xAngle %360;}
-    
+
+   
     c_pos = analogRead(0);
     
     IMU_turn = xAngleOld - xAngle;
+    
     if(IMU_turn > 0){
       //counter clockwise
     }
@@ -119,14 +121,23 @@ void loop()
     if(pot_target > 1023){
       pot_target = pot_target -1023;
     }
+    /* Serial.print("IMU_change =");
+    Serial.print(IMU_turn);
+
+    Serial.print("Pot=");
+    Serial.print(c_pos);
+
+    Serial.print("Pot Target=");
+    Serial.println(pot_target);
+    */
     t_pos = pot_target;
 
     pid();
     
-    sprintf(buffer, "Output= %d",pwm);
-    Serial.print(buffer); 
-    sprintf(buffer, "Input= %d\n",c_pos);
-    Serial.print(buffer); 
+    //sprintf(buffer, "Output= %d",pwm);
+   // Serial.print(buffer); 
+    //sprintf(buffer, "Input= %d\n",c_pos);
+   // Serial.print(buffer); 
     
     xAngleOld = xAngle; 
     delay(BNO055_SAMPLERATE_DELAY_MS);
@@ -145,11 +156,11 @@ void pid(){
     else{pwm = pwm;}
 
     if(pwm>0){
-      clockwise();
+      c_clockwise();
       analogWrite(PWMA,pwm); 
     }
     else if (pwm < 0 ) {
-      c_clockwise();
+      clockwise();
       analogWrite(PWMA,-pwm);
     }
     else{
@@ -159,6 +170,9 @@ void pid(){
     if(abs(error) < ERROR_MARGIN){
       analogWrite(PWMA,0);
     }
+    sprintf(buffer, "Output= %d",pwm);
+    Serial.println(buffer); 
+    
 }
 void clockwise(){
   digitalWrite(AIN1, HIGH);  
