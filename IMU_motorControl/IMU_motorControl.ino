@@ -18,7 +18,7 @@ Motor_PinA - Motor_pinB - Ground
     Red         Black       
 */    
 /**************** VARIABLES *******************/
-#define kP 1.5
+#define kP 2.2
 #define ERROR_MARGIN 5
 #define TARGET_POSITION 1000
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -29,9 +29,9 @@ char buffer[MAX_OUT_CHARS + 1];
 int t_pos, c_pos,error;
 int pwm = 0;
 int flag = 0;
-int xAngle,yAngle,zAngle,xAngleInit,yAngleInit,zAngleInit,xAngleOld;
-int IMU_turn;
-int pot_target;
+int xAngle,yAngle,zAngle,xAngleInit,yAngleInit,zAngleInit,xAngleOld, yAngleOld;
+int IMU_turn, IMU_turn_y;
+int pot_target, pot_target_y;
 
 Adafruit_BNO055 bno = Adafruit_BNO055();
 
@@ -103,13 +103,16 @@ void loop()
   //old = 40 new = 350   turn = -310  right = 310  turn forward  -> abs()
   //old = 355 new = 35  turn = 320  right = 40  turn forward  -> -360 (-)
     xAngle = euler.x()+ 180;
+    yAngle = euler.y() + 180;
     if(xAngle > 360){xAngle = xAngle %360;}
+    if(yAngle > 360){yAngle = yAngle %360;}
 
    
     c_pos = analogRead(0);
     
     IMU_turn = xAngleOld - xAngle;
-    
+    IMU_turn_y = yAngleOld - yAngle;
+
     if(IMU_turn > 0){
       //counter clockwise
     }
@@ -118,10 +121,15 @@ void loop()
     }
     
     pot_target = c_pos + IMU_turn*2.841;
+    pot_target_y = c_pos + IMU_turn_y*2.841;
+
     if(pot_target > 1023){
       pot_target = pot_target -1023;
     }
-    /* Serial.print("IMU_change =");
+    if(pot_target_y > 1023){
+      pot_target_y = pot_target_y -1023;
+    }
+     Serial.print("IMU_change =");
     Serial.print(IMU_turn);
 
     Serial.print("Pot=");
@@ -129,8 +137,9 @@ void loop()
 
     Serial.print("Pot Target=");
     Serial.println(pot_target);
-    */
+   
     t_pos = pot_target;
+    
 
     pid();
     
@@ -140,6 +149,7 @@ void loop()
    // Serial.print(buffer); 
     
     xAngleOld = xAngle; 
+    yAngleOld = yAngle;   
     delay(BNO055_SAMPLERATE_DELAY_MS);
     
     }
@@ -154,7 +164,7 @@ void pid(){
     if(pwm > 255){ pwm = 255;}
     else if(pwm < -255){ pwm = -255;}
     else{pwm = pwm;}
-
+//c_clock for forearm, clock for wrist
     if(pwm>0){
       c_clockwise();
       analogWrite(PWMA,pwm); 
@@ -164,7 +174,7 @@ void pid(){
       analogWrite(PWMA,-pwm);
     }
     else{
-      clockwise();
+      c_clockwise();
       analogWrite(PWMA,0);
     }    
     if(abs(error) < ERROR_MARGIN){

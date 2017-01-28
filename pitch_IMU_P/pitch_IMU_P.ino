@@ -9,9 +9,9 @@ Motor_PinA - Motor_pinB - Ground
     Red         Black       
 */    
 /**************** VARIABLES *******************/
-#define kP 0.2
+#define kP 0.7
 #define ERROR_MARGIN 10
-#define TARGET_POSITION 500
+#define TARGET_POSITION 400
 
 int t_pos, c_pos,error;
 int pwm = 0;
