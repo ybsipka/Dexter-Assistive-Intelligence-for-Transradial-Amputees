@@ -9,28 +9,31 @@
  * IMU + Motor Control 2DOF Wrist
  ********************************************************/
 /********************* PINS ******************/
-#define AIN1 7
-#define AIN2 8
-#define PWMA 6
+#define AIN1 4
+#define AIN2 5
+#define PWMA 3
 
-#define BIN1 4
-#define BIN2 5
-#define PWMB 3
-
-#define AIN1 7
-#define AIN2 8
-#define PWMA 6
+#define BIN1 7
+#define BIN2 8
+#define PWMB 6
 
 #define MAX_OUT_CHARS 16
 
-/* might change
+/* connections
+ *  might change
 Motor_PinA - Motor_pinB - Ground - B - A
     Red         Black             Blue(gnd) - green(pwr)
-
+  
+    Connections
+   ===========
+   Connect SCL to analog 5
+   Connect SDA to analog 4
+   Connect VDD to 3.3V DC
+   Connect GROUND to common ground
          
 */    
 /**************** VARIABLES *******************/
-#define kPForearm 0.3
+#define kPForearm 2
 #define kPWrist 0.3
 #define TARGET_POSITION 1000
 #define INITIAL_POSITION_X 500
@@ -104,16 +107,29 @@ void loop()
     int angleDifferenceZ = zAngleOld - zAngle;
 
    //map IMU values to potentiometer values
-    int targetX = map(currentPositionWrist, 0, 360, 1023, 0);
-    int targetZ = map(currentPositionForearm, 0, 360, 1023, 0);
-        
+    int targetX = currentPositionWrist + angleDifferenceX*2.841;
+    int targetZ = currentPositionForearm + angleDifferenceZ*2.841;
+    if(targetX > 1023){
+      targetX = targetX -1023;
+    }
+    if(targetZ > 1023){
+      targetZ = targetZ -1023;
+    }
+    Serial.print("Angle diff Z = ");
+    Serial.print(angleDifferenceZ);
+    Serial.print("target x = ");
+    Serial.print(targetZ);
+    Serial.print("current pot value = ");
+    Serial.print(currentPositionForearm);
+    
     int outputX;
     int outputZ;
     
     //pid control
-    wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
+    //wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
     forearmPID.pid(currentPositionForearm, targetZ, kPForearm, outputZ);
-    
+
+   
     //store old angles
     xAngleOld = xAngle; 
     zAngleOld = zAngle;  
@@ -122,14 +138,3 @@ void loop()
     }
     
 }
-
-
-/*pot_target = c_pos_x + IMU_turn*2.841;
-    pot_target_z = c_pos_z + IMU_turn_z*2.841;
-
-    if(pot_target > 1023){
-      pot_target = pot_target -1023;
-    }
-    if(pot_target_z > 1023){
-      pot_target_z = pot_target_z -1023;
-    }*/
