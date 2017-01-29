@@ -8,9 +8,9 @@
 
 SPH_PID::SPH_PID(int motorPWM, int motorIN1,int motorIN2)
 {
-  //pinMode(motorIN1, OUTPUT);
-  //pinMode(motorIN2, OUTPUT);
-  //pinMode(motorPWM, OUTPUT);
+  pinMode(motorIN1, OUTPUT);
+  pinMode(motorIN2, OUTPUT);
+  pinMode(motorPWM, OUTPUT);
 
   _motorIN1 = motorIN1;
   _motorIN2 = motorIN2;
