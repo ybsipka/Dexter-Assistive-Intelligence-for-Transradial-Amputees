@@ -34,7 +34,7 @@ Motor_PinA - Motor_pinB - Ground - B - A
 */    
 /**************** VARIABLES *******************/
 #define kPForearm 2
-#define kPWrist 6
+#define kPWrist 4.5
 #define TARGET_POSITION 1000
 #define INITIAL_POSITION_X 500
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -50,9 +50,12 @@ Adafruit_BNO055 bno = Adafruit_BNO055();
 SPH_PID wristPID(PWMA, AIN1, AIN2);
 SPH_PID forearmPID(PWMB, BIN1, BIN2);
 
-int xAngle,  zAngle;
+int xAngle,  zAngle, yAngle;
 int xAngleOld = 0;
+int yAngleOld = 0;
 int zAngleOld = 0;
+
+
 unsigned long timePassed, timeStart, timeEnd;
 
 void setup()
@@ -94,6 +97,7 @@ void loop()
   
   //read angles 
     xAngle = euler.x() + 180;
+    yAngle = euler.y() + 180;
     zAngle = euler.z() + 100;
     
   //set limits to angles  
@@ -106,38 +110,54 @@ void loop()
 
    //get angle differences
     int angleDifferenceX = xAngleOld - xAngle;
+    int angleDifferenceY = yAngleOld - yAngle;
     int angleDifferenceZ = zAngleOld - zAngle;
 
+    int targetX;
+   if(angleDifferenceX > 0){
+    //might be dangerous if turning the arm fast
+    targetX = currentPositionWrist + angleDifferenceX*3.2;
+    }else {
+     targetX = currentPositionWrist + angleDifferenceX*2.841;
+    }
+    /*int targetZ;
+   if(angleDifferenceZ > 0){
+    //might be dangerous if turning the arm fast
+    targetZ = currentPositionForearm + angleDifferenceZ*3.5;
+    }else {
+     targetZ = currentPositionForearm + angleDifferenceZ*2.841;
+    }*/
    //map IMU values to potentiometer values
-    int targetX = currentPositionWrist + angleDifferenceX*2.841;
+    //int targetX = currentPositionWrist + angleDifferenceX*2.841;
     int targetZ = currentPositionForearm + angleDifferenceZ*2.841;
+    
     if(targetX > 1023){
       targetX = targetX -1023;
     }
     if(targetZ > 1023){
       targetZ = targetZ -1023;
     }
-    //Serial.print("Angle diff = ");
-    //Serial.print(angleDifferenceX);
-    //Serial.print("target = ");
-    //Serial.print(targetX);
-    Serial.print("current pot value = ");
-    Serial.print(currentPositionForearm);
-    Serial.print("angle = ");
-    Serial.print(zAngle);
+   
     int outputX;
     int outputZ;
-    
+
+    Serial.print("angleDifferenceX = ");
+    Serial.print(angleDifferenceX);
     //pid control
+    //Serial.print("PID return");
+    //Serial.println(wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX));
     wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
-    forearmPID.pid(currentPositionForearm, targetZ, kPForearm, outputZ);
+    Serial.println(forearmPID.pid(currentPositionForearm, targetZ, kPForearm, outputZ));
 
    
     //store old angles
     xAngleOld = xAngle; 
+    yAngleOld = yAngle;
     zAngleOld = zAngle;  
      
-    //delay(BNO055_SAMPLERATE_DELAY_MS); 
+    delay(BNO055_SAMPLERATE_DELAY_MS); 
+    delay(BNO055_SAMPLERATE_DELAY_MS/4); 
+
     timeEnd = millis();
     timePassed = timeEnd - timeStart;
     //Serial.print("Time = ");
