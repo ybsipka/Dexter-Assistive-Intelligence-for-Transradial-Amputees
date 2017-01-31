@@ -33,8 +33,8 @@ Motor_PinA - Motor_pinB - Ground - B - A
          
 */    
 /**************** VARIABLES *******************/
-#define kPForearm 2
-#define kPWrist 0.3
+#define kPForearm 1.8
+#define kPWrist 6
 #define TARGET_POSITION 1000
 #define INITIAL_POSITION_X 500
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -53,6 +53,7 @@ SPH_PID forearmPID(PWMB, BIN1, BIN2);
 int xAngle,  zAngle;
 int xAngleOld = 0;
 int zAngleOld = 0;
+unsigned long timePassed, timeStart, timeEnd;
 
 void setup()
 {
@@ -88,6 +89,7 @@ void setup()
 void loop()
 { 
   while(true){
+    timeStart= millis();
     imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   
   //read angles 
@@ -115,18 +117,18 @@ void loop()
     if(targetZ > 1023){
       targetZ = targetZ -1023;
     }
-    Serial.print("Angle diff Z = ");
-    Serial.print(angleDifferenceZ);
-    Serial.print("target x = ");
-    Serial.print(targetZ);
+    Serial.print("Angle diff = ");
+    Serial.print(angleDifferenceX);
+    Serial.print("target = ");
+    Serial.print(targetX);
     Serial.print("current pot value = ");
-    Serial.print(currentPositionForearm);
+    Serial.print(currentPositionWrist);
     
     int outputX;
     int outputZ;
     
     //pid control
-    //wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
+    wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
     forearmPID.pid(currentPositionForearm, targetZ, kPForearm, outputZ);
 
    
@@ -135,6 +137,10 @@ void loop()
     zAngleOld = zAngle;  
      
     //delay(BNO055_SAMPLERATE_DELAY_MS); 
+    timeEnd = millis();
+    timePassed = timeEnd - timeStart;
+    //Serial.print("Time = ");
+    //Serial.println(timePassed);
     }
     
 }
