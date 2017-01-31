@@ -33,7 +33,7 @@ Motor_PinA - Motor_pinB - Ground - B - A
          
 */    
 /**************** VARIABLES *******************/
-#define kPForearm 1.8
+#define kPForearm 2
 #define kPWrist 6
 #define TARGET_POSITION 1000
 #define INITIAL_POSITION_X 500
@@ -94,7 +94,7 @@ void loop()
   
   //read angles 
     xAngle = euler.x() + 180;
-    zAngle = euler.z() + 180;
+    zAngle = euler.z() + 100;
     
   //set limits to angles  
     if(xAngle > 360){xAngle = xAngle %360;}
@@ -117,13 +117,14 @@ void loop()
     if(targetZ > 1023){
       targetZ = targetZ -1023;
     }
-    Serial.print("Angle diff = ");
-    Serial.print(angleDifferenceX);
-    Serial.print("target = ");
-    Serial.print(targetX);
+    //Serial.print("Angle diff = ");
+    //Serial.print(angleDifferenceX);
+    //Serial.print("target = ");
+    //Serial.print(targetX);
     Serial.print("current pot value = ");
-    Serial.print(currentPositionWrist);
-    
+    Serial.print(currentPositionForearm);
+    Serial.print("angle = ");
+    Serial.print(zAngle);
     int outputX;
     int outputZ;
     

@@ -9,7 +9,7 @@
 
 #define CLOCKWISE 0
 #define COUNTER_CLOCKWISE 1
-#define ERROR_MARGIN 10
+#define ERROR_MARGIN 5
 
 class SPH_PID
 {
