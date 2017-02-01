@@ -19,6 +19,7 @@ SPH_PID::SPH_PID(int motorPWM, int motorIN1,int motorIN2)
 
 int SPH_PID::pid(int currentPosition, int targetPosition, float pConstant, int output){
     int error = targetPosition - currentPosition;
+
     output = pConstant * error;
     int direction; //0 for clockwise 1 for c_clockwise
 
@@ -26,7 +27,13 @@ int SPH_PID::pid(int currentPosition, int targetPosition, float pConstant, int o
     if(output > 255){ output = 255;}
     else if(output < -255){ output = -255;}
     else{output = output;}
-
+  //  Serial.print("Error Value =");
+  //  Serial.print(abs(error));
+    if(abs(error) < ERROR_MARGIN){
+      runMotor(0,0);
+      return 0;
+      //initialPosition = 1;
+    }
     if(output > 0){
       direction = COUNTER_CLOCKWISE;
       runMotor(output,direction);
@@ -41,11 +48,7 @@ int SPH_PID::pid(int currentPosition, int targetPosition, float pConstant, int o
       runMotor(0,0);
       return 0;
     }
-    if(abs(error) < ERROR_MARGIN){
-      runMotor(0,0);
-      return 0;
-      //initialPosition = 1;
-    }
+
 }
 
 void SPH_PID::runMotor(int output, int direction){
