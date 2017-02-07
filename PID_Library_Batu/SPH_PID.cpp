@@ -58,8 +58,8 @@ void SPH_PID::runMotor(int output, int direction){
     c_clockwise();
   }
     analogWrite(_motorPWM,output);
-    Serial.print("Output = ");
-    Serial.println(output);
+    //Serial.print("Output = ");
+    //Serial.println(output);
 }
 
 void SPH_PID::clockwise(){
