@@ -107,20 +107,33 @@ void setup()
   TIMSK2 |= (1 << OCIE2A); // Output compare mode 
   OCR2A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] ~ 500 Hz ocr2a = 250
 
+// Setup Timer0. Set fot control frequency.
+  TCCR0B |= (1 << CS02); // Set prescaler as n = 64
+  TCCR0B &= ~(1 << CS01); 
+  TCCR0B &= ~(1 << CS00);  
+
+  TCCR0B |= (1 << WGM02);
+  TIMSK0 |= (1 << OCIE0A); // Output compare mode 
+  OCR0A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] 
+
   sei();
   
 }
 
-int interruptCounter = 0;
-int controlLoopCounter = 0;
+int interruptCounterTimer0 = 0;
+int interruptCounterTimer2 = 0;
+int controlLoopCounterIMU = 0;
+int controlLoopCounterPID = 0;
 
 void DoMeSomething() //every second
 {
   //Serial.print("controlLoopCounter=");
-  Serial.println(controlLoopCounter);
+  Serial.println(controlLoopCounterIMU);
+  
+  Serial.println(interruptCounterTimer0);
+  Serial.println(controlLoopCounterPID);
   //Serial.print("interruptCounter=");  
-  Serial.println(interruptCounter);
-
+  Serial.println(interruptCounterTimer2);
   /*Serial.print("xAngle = ");
   Serial.print(xAngle);
   Serial.print("yAngle = ");
@@ -128,32 +141,46 @@ void DoMeSomething() //every second
   Serial.print("zAngle = ");
   Serial.println(zAngle);*/
   
-  interruptCounter = 0;
-  controlLoopCounter = -1;
+  interruptCounterTimer0 = 0;
+  interruptCounterTimer2 = 0;
+  controlLoopCounterIMU = -1;
+  controlLoopCounterPID = -1;
+  
 }
 
 // Control logic goes here. Exected at ~1.0khz.
 ISR(TIMER2_COMPA_vect)
 {  
-  interruptCounter++;
+  interruptCounterTimer2++;
 }
-
+// Control logic goes here. Exected at ~1.0khz.
+ISR(TIMER0_COMPA_vect)
+{  
+  interruptCounterTimer0++;
+}
 void loop()
 { 
-  if(controlLoopCounter < interruptCounter)
+  if(controlLoopCounterIMU < interruptCounterTimer0)
   {
     IMUCode();
-    controlLoopCounter++;
+    controlLoopCounterIMU++;
+  }
+  if(controlLoopCounterPID < interruptCounterTimer2)
+  {
+    PIDCode();
+    controlLoopCounterPID++;
   }
 }
 
 void IMUCode(){
-    imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   
   //read angles 
-    xAngle = euler.x();
-    //yAngle = euler.y();
-    zAngle = euler.z();
+  xAngle = euler.x();
+  //yAngle = euler.y();
+  zAngle = euler.z();
+}
+void PIDCode(){
     /*Serial.print("xAngle = ");
     Serial.print(xAngle);
     Serial.print("yAngle = ");

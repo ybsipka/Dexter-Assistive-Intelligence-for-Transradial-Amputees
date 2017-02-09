@@ -60,6 +60,18 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define TOP_MIDDLE 890
 #define TOP_DOWN  770
 
+#define INDEX_CYL 5
+#define MIDDLE_CYL 15
+#define RING_CYL 75
+#define LEFT_CYL 600
+#define TOP_CYL 870
+
+#define INDEX_BALL 0
+#define MIDDLE_BALL 21
+#define RING_BALL 210
+#define LEFT_BALL 600
+#define TOP_BALL 870
+
 #define indexPotPin 0
 #define middlePotPin 1
 #define ringPotPin 2
@@ -94,26 +106,42 @@ void loop()
     int currentPositionThumbLeft = analogRead(thumbTopPotPin);
     int currentPositionThumbTop = analogRead(thumbLeftPotPin);
     
-  //Serial.print("Current Position old= ");
-  //Serial.print(currentPositionIndex);
+  Serial.print("Current Position old= ");
+  Serial.println(currentPositionRing);
   
    int outputIndex;
    int outputMiddle;
    int outputRing;
    int outputLeft;
    int outputTop;
-     /*
+ 
    int targetIndex = INDEX_STRAIGHT;
    int targetMiddle = MIDDLE_STRAIGHT; 
    int targetRing = RING_STRAIGHT;   
    int targetThumbLeft = LEFT_RIGHT;
    int targetThumbTop = TOP_DOWN;
-   */
+   
+   /*
    int targetIndex = INDEX_CURLED;
    int targetMiddle = MIDDLE_CURLED; 
    int targetRing = RING_CURLED;   
    int targetThumbLeft = LEFT_LEFT;
    int targetThumbTop = TOP_MIDDLE;
+   */
+   /*
+   int targetIndex = INDEX_CYL;
+   int targetMiddle = MIDDLE_CYL; 
+   int targetRing = RING_CYL;   
+   int targetThumbLeft = LEFT_CYL;
+   int targetThumbTop = TOP_CYL;
+   */
+   /*
+    int targetIndex = INDEX_BALL;
+   int targetMiddle = MIDDLE_BALL; 
+   int targetRing = RING_BALL;   
+   int targetThumbLeft = LEFT_BALL;
+   int targetThumbTop = TOP_BALL;
+   */
    
    //float currentPositionIndexNew = map(currentPositionIndex,0,195,0,1000);
    //Serial.print("Current Position INDEX= ");
@@ -123,7 +151,7 @@ void loop()
     indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
     middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
     ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
-    thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
+    //thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
     thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
     timeEnd = millis();
     timePassed = timeEnd - timeStart;
