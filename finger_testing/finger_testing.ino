@@ -7,26 +7,29 @@
  ********************************************************/
 /********************* PINS ******************/
 //index
-#define AIN1 22
-#define AIN2 23
-#define PWMA 2
+#define AIN1 30
+#define AIN2 31
+#define PWMA 3
 
 //middle
-#define BIN1 24
-#define BIN2 25
-#define PWMB 3
+#define BIN1 32
+#define BIN2 33
+#define PWMB 4
 
-#define AIN21 26
-#define AIN22 27
-#define PWM2A 4
+//ring
+#define AIN21 46
+#define AIN22 47
+#define PWM2A 5
 
-#define BIN21 28
-#define BIN22 29
-#define PWM2B 5
+//thumb left
+#define BIN21 48
+#define BIN22 49
+#define PWM2B 6
 
-#define AIN31 30
-#define AIN32 31
-#define PWM3A 6
+//thumb top
+#define AIN31 22
+#define AIN32 23
+#define PWM3A 7
 
 #define MAX_OUT_CHARS 16
 
@@ -49,7 +52,7 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define TARGET_POSITION_THUMBTOP 850
 
 #define INDEX_STRAIGHT 170
-#define INDEX_CURLED  5
+#define INDEX_CURLED  10
 #define MIDDLE_STRAIGHT 170
 #define MIDDLE_CURLED 10
 #define RING_STRAIGHT 210
@@ -75,17 +78,17 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define indexPotPin 0
 #define middlePotPin 1
 #define ringPotPin 2
-#define thumbLeftPotPin 4
-#define thumbTopPotPin 3
+#define thumbLeftPotPin 3
+#define thumbTopPotPin 4
 
 char buffer[MAX_OUT_CHARS + 1];
 
 /*****************SPH_PID(PWM,IN1,IN2);*************************/
 SPH_PID indexPID(PWMA, AIN1, AIN2);
 SPH_PID middlePID(PWMB, BIN1, BIN2);
-SPH_PID thumbLeftPID(PWM2A, AIN21, AIN22);
-SPH_PID thumbTopPID(PWM2B, BIN21, BIN22);
-SPH_PID ringPID(PWM3A, AIN31, AIN32);
+SPH_PID ringPID(PWM2A, AIN21, AIN22);
+SPH_PID thumbLeftPID(PWM2B, BIN21, BIN22);
+//SPH_PID thumbTopPID(PWM2B, BIN21, BIN22);
 
 unsigned long timePassed, timeStart, timeEnd;
 
@@ -106,8 +109,8 @@ void loop()
     int currentPositionThumbLeft = analogRead(thumbTopPotPin);
     int currentPositionThumbTop = analogRead(thumbLeftPotPin);
     
-  Serial.print("Current Position old= ");
-  Serial.println(currentPositionRing);
+  //Serial.print("Current Position old= ");
+  //Serial.println(currentPositionIndex);
   
    int outputIndex;
    int outputMiddle;
@@ -115,11 +118,11 @@ void loop()
    int outputLeft;
    int outputTop;
  
-   int targetIndex = INDEX_STRAIGHT;
-   int targetMiddle = MIDDLE_STRAIGHT; 
-   int targetRing = RING_STRAIGHT;   
-   int targetThumbLeft = LEFT_RIGHT;
-   int targetThumbTop = TOP_DOWN;
+   int targetIndex = INDEX_CURLED;
+   int targetMiddle = MIDDLE_CURLED; 
+   int targetRing = RING_CURLED;  
+   int targetThumbLeft = LEFT_LEFT;
+   int targetThumbTop = INDEX_CURLED;
    
    /*
    int targetIndex = INDEX_CURLED;
@@ -144,18 +147,22 @@ void loop()
    */
    
    //float currentPositionIndexNew = map(currentPositionIndex,0,195,0,1000);
-   //Serial.print("Current Position INDEX= ");
-   //Serial.print(currentPositionIndex);
-   //Serial.print("Current Position Ring= ");
-   //Serial.print(currentPositionRing);
-    indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
-    middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
-    ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
-    //thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
-    thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
-    timeEnd = millis();
-    timePassed = timeEnd - timeStart;
-    //Serial.print("Time = ");
-    //Serial.println(timePassed);
-    }
+   Serial.print("Current Position INDEX = ");
+   Serial.print(currentPositionIndex);
+   Serial.print(" Current Position MIDDLE = ");
+   Serial.print(currentPositionMiddle);
+   Serial.print(" Current Position Left = ");
+   Serial.println(currentPositionThumbLeft);
+   
+   indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
+   middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
+   ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
+   thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
+   //thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
+   
+   timeEnd = millis();
+   timePassed = timeEnd - timeStart;
+   //Serial.print("Time = ");
+   //Serial.println(timePassed);
+   }
 }
