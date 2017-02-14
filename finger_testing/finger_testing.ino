@@ -27,8 +27,8 @@
 #define PWM2B 6
 
 //thumb top
-#define AIN31 22
-#define AIN32 23
+#define AIN31 42
+#define AIN32 43
 #define PWM3A 7
 
 #define MAX_OUT_CHARS 16
@@ -51,14 +51,14 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define TARGET_POSITION_THUMBLEFT 430
 #define TARGET_POSITION_THUMBTOP 850
 
-#define INDEX_STRAIGHT 170
-#define INDEX_CURLED  10
-#define MIDDLE_STRAIGHT 170
-#define MIDDLE_CURLED 10
+#define INDEX_STRAIGHT 170  // Previously 170 and 10
+#define INDEX_CURLED  15
+#define MIDDLE_STRAIGHT 210 // Previously 210 and 10
+#define MIDDLE_CURLED 20
 #define RING_STRAIGHT 210
-#define RING_CURLED 35
+#define RING_CURLED 40
 #define LEFT_LEFT 700
-#define LEFT_RIGHT  430
+#define LEFT_RIGHT  470
 #define TOP_TOP 1000
 #define TOP_MIDDLE 890
 #define TOP_DOWN  770
@@ -75,11 +75,23 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define LEFT_BALL 600
 #define TOP_BALL 870
 
+// Index: Red-Pink, Black-White
+// Middle: Red-Pink, Black-White
+// Ring: Purple-Red-Pink, Grey-White
+// Left: Red-  , Black-
+// Top: Red-  , Black-
+
 #define indexPotPin 0
 #define middlePotPin 1
 #define ringPotPin 2
 #define thumbLeftPotPin 3
 #define thumbTopPotPin 4
+
+//change them if you are using digitalPinToInterrupt()
+#define indexFSRpin 2 //21
+#define middleFSRpin 3 //20
+#define ringFSRpin 4 //19
+#define thumbFSRpin 5 //18
 
 char buffer[MAX_OUT_CHARS + 1];
 
@@ -88,20 +100,39 @@ SPH_PID indexPID(PWMA, AIN1, AIN2);
 SPH_PID middlePID(PWMB, BIN1, BIN2);
 SPH_PID ringPID(PWM2A, AIN21, AIN22);
 SPH_PID thumbLeftPID(PWM2B, BIN21, BIN22);
-//SPH_PID thumbTopPID(PWM2B, BIN21, BIN22);
+SPH_PID thumbTopPID(PWM3A, AIN31, AIN32);
 
 unsigned long timePassed, timeStart, timeEnd;
 
+int indexTouched,middleTouched, ringTouched,thumbTouched = 0;
+
+int targetIndex;
+   int targetMiddle; 
+   int targetRing;  
+   int targetThumbLeft;
+   int targetThumbTop;
+   
 void setup()
 {
   Serial.begin(9600);
+
+  attachInterrupt(indexFSRpin,indexInterrupt,FALLING);
+  attachInterrupt(middleFSRpin,middleInterrupt,FALLING);
+  //attachInterrupt(ringFSRpin,ringInterrupt,FALLING);
+  //attachInterrupt(thumbFSRpin,thumbInterrupt,FALLING);
+   targetIndex = INDEX_STRAIGHT;
+   targetMiddle = MIDDLE_STRAIGHT; 
+   targetRing = RING_STRAIGHT;  
+   targetThumbLeft = LEFT_LEFT;
+   targetThumbTop = TOP_DOWN;
+
+   //int targetIndex = INDEX_CURLED;;
 }
 
 void loop()
 { 
   while(true){
-    timeStart= millis();
-   
+    
   //get current position readings   
     int currentPositionIndex = analogRead(indexPotPin);
     int currentPositionMiddle = analogRead(middlePotPin);
@@ -109,21 +140,17 @@ void loop()
     int currentPositionThumbLeft = analogRead(thumbTopPotPin);
     int currentPositionThumbTop = analogRead(thumbLeftPotPin);
     
-  //Serial.print("Current Position old= ");
-  //Serial.println(currentPositionIndex);
-  
    int outputIndex;
    int outputMiddle;
    int outputRing;
    int outputLeft;
    int outputTop;
  
-   int targetIndex = INDEX_CURLED;
-   int targetMiddle = MIDDLE_CURLED; 
-   int targetRing = RING_CURLED;  
-   int targetThumbLeft = LEFT_LEFT;
-   int targetThumbTop = INDEX_CURLED;
-   
+  Serial.println(middleTouched);
+   if(middleTouched > 0){
+    targetIndex = currentPositionIndex;
+    middleTouched = 0;
+   }
    /*
    int targetIndex = INDEX_CURLED;
    int targetMiddle = MIDDLE_CURLED; 
@@ -145,24 +172,33 @@ void loop()
    int targetThumbLeft = LEFT_BALL;
    int targetThumbTop = TOP_BALL;
    */
-   
+   /*
    //float currentPositionIndexNew = map(currentPositionIndex,0,195,0,1000);
    Serial.print("Current Position INDEX = ");
    Serial.print(currentPositionIndex);
    Serial.print(" Current Position MIDDLE = ");
    Serial.print(currentPositionMiddle);
-   Serial.print(" Current Position Left = ");
-   Serial.println(currentPositionThumbLeft);
+   Serial.print(" Current Position TOP = ");
+   Serial.println(currentPositionThumbTop);*/
    
    indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
    middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
-   ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
+  ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
    thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
-   //thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
+   thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
    
-   timeEnd = millis();
-   timePassed = timeEnd - timeStart;
-   //Serial.print("Time = ");
-   //Serial.println(timePassed);
+ 
    }
 }
+
+void indexInterrupt(){
+  indexTouched++;
+}
+void middleInterrupt(){
+  middleTouched++;
+}void ringInterrupt(){
+  ringTouched++;
+}void thumbInterrupt(){
+  thumbTouched++;
+}
+
