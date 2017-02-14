@@ -65,10 +65,10 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define TARGET_POSITION_THUMBTOP 850
 
 // Range
-#define INDEX_STRAIGHT 170
-#define INDEX_CURLED  10
-#define MIDDLE_STRAIGHT 210
-#define MIDDLE_CURLED 10
+#define INDEX_STRAIGHT 300  // Previously 170 and 10
+#define INDEX_CURLED  130
+#define MIDDLE_STRAIGHT 310 // Previously 210 and 10
+#define MIDDLE_CURLED 130
 #define RING_STRAIGHT 210
 #define RING_CURLED 35
 #define LEFT_LEFT 700
@@ -186,8 +186,8 @@ void loop()
    Serial.print(", TOP = ");
    Serial.println(currentPositionThumbTop);
    
-   indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
-   //middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
+   //indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
+   middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
    //ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
    //thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
    //thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
