@@ -67,7 +67,7 @@ Motor_PinA - Motor_pinB - Ground - B - A
 // Range
 #define INDEX_STRAIGHT 170
 #define INDEX_CURLED  10
-#define MIDDLE_STRAIGHT 170
+#define MIDDLE_STRAIGHT 210
 #define MIDDLE_CURLED 10
 #define RING_STRAIGHT 210
 #define RING_CURLED 35
@@ -104,9 +104,17 @@ SPH_PID indexPID(PWMA, AIN1, AIN2);
 SPH_PID middlePID(PWMB, BIN1, BIN2);
 SPH_PID ringPID(PWM2A, AIN21, AIN22);
 SPH_PID thumbLeftPID(PWM2B, BIN21, BIN22);
-//SPH_PID thumbTopPID(PWM3A, AIN31, AIN32);
+SPH_PID thumbTopPID(PWM3A, AIN31, AIN32);
 
 unsigned long timePassed, timeStart, timeEnd;
+
+
+// Index: Red-Pink, Black-White
+// Middle: Red-Pink, Black-White
+// Ring: Purple-Red-Pink, Grey-White
+// Left: Red-  , Black-
+// Top: Red-  , Black-
+
 
 void setup()
 {
@@ -139,7 +147,7 @@ void loop()
     int targetMiddle = MIDDLE_STRAIGHT; 
     int targetRing = RING_STRAIGHT;  
     int targetThumbLeft = LEFT_RIGHT;
-    int targetThumbTop = TOP_DOWN;
+    int targetThumbTop = TOP_MIDDLE;
    
    /*
     // Curled Pose
@@ -169,13 +177,13 @@ void loop()
    //float currentPositionIndexNew = map(currentPositionIndex,0,195,0,1000);
    Serial.print("Current Position INDEX = ");
    Serial.print(currentPositionIndex);
-   Serial.print(" MIDDLE = ");
+   Serial.print(", MIDDLE = ");
    Serial.print(currentPositionMiddle);
-   Serial.print(" RING = ");
-   Serial.println(currentPositionRing);
-   Serial.print(" LEFT = ");
-   Serial.println(currentPositionThumbLeft);
-   Serial.print(" TOP = ");
+   Serial.print(", RING = ");
+   Serial.print(currentPositionRing);
+   Serial.print(", LEFT = ");
+   Serial.print(currentPositionThumbLeft);
+   Serial.print(", TOP = ");
    Serial.println(currentPositionThumbTop);
    
    indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
