@@ -54,7 +54,7 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define INDEX_STRAIGHT 170  // Previously 170 and 10
 #define INDEX_CURLED  15
 #define MIDDLE_STRAIGHT 210 // Previously 210 and 10
-#define MIDDLE_CURLED 20
+#define MIDDLE_CURLED 15
 #define RING_STRAIGHT 210
 #define RING_CURLED 40
 #define LEFT_LEFT 700
@@ -66,7 +66,7 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define INDEX_CYL 5
 #define MIDDLE_CYL 15
 #define RING_CYL 75
-#define LEFT_CYL 600
+#define LEFT_CYL 550
 #define TOP_CYL 870
 
 #define INDEX_BALL 0
@@ -120,10 +120,10 @@ void setup()
   attachInterrupt(middleFSRpin,middleInterrupt,FALLING);
   //attachInterrupt(ringFSRpin,ringInterrupt,FALLING);
   //attachInterrupt(thumbFSRpin,thumbInterrupt,FALLING);
-   targetIndex = INDEX_STRAIGHT;
-   targetMiddle = MIDDLE_STRAIGHT; 
+   targetIndex = INDEX_CURLED;
+   targetMiddle = MIDDLE_CURLED; 
    targetRing = RING_STRAIGHT;  
-   targetThumbLeft = LEFT_LEFT;
+   targetThumbLeft = LEFT_CYL;
    targetThumbTop = TOP_DOWN;
 
    //int targetIndex = INDEX_CURLED;;
@@ -146,10 +146,19 @@ void loop()
    int outputLeft;
    int outputTop;
  
-  Serial.println(middleTouched);
+  Serial.print(middleTouched);
+  Serial.print("   ");
    if(middleTouched > 0){
-    targetIndex = currentPositionIndex;
+    targetMiddle = currentPositionMiddle;
     middleTouched = 0;
+        Serial.print("MIDDLE TOUCHEDD!!!!!!!!!!!!!!!!!");
+
+   }
+   Serial.println(indexTouched);
+   if(indexTouched > 0){
+    targetIndex = currentPositionIndex;
+    indexTouched = 0;
+    Serial.print("INDEX TOUCHEDD!!!!!!!!!!!!!!!!!");
    }
    /*
    int targetIndex = INDEX_CURLED;
@@ -178,8 +187,8 @@ void loop()
    Serial.print(currentPositionIndex);
    Serial.print(" Current Position MIDDLE = ");
    Serial.print(currentPositionMiddle);
-   Serial.print(" Current Position TOP = ");
-   Serial.println(currentPositionThumbTop);*/
+   Serial.print(" Current Position LEFT = ");
+   Serial.println(currentPositionThumbLeft);*/
    
    indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
    middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
