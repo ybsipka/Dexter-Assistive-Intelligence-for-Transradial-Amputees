@@ -11,13 +11,13 @@
  * IMU + Motor Control 2DOF Wrist
  ********************************************************/
 /********************* PINS ******************/
-#define AIN1 4
-#define AIN2 5
-#define PWMA 3
+#define AIN1 51
+#define AIN2 50
+#define PWMA 12
 
-#define BIN1 7
-#define BIN2 8
-#define PWMB 6
+#define BIN1 53
+#define BIN2 52
+#define PWMB 13
 
 #define MAX_OUT_CHARS 16
 
@@ -38,8 +38,8 @@ Motor_PinA - Motor_pinB - Ground - B - A
 /* FOREARM = Z AXIS WRIST = Y AXIS */
 
 /**************** VARIABLES *******************/
-#define kPForearm 8
-#define kPWrist 4.5
+#define kPForearm 8  //******** HAVE TO ADJUST THE GAIN SO THAT IT MATCHES THE ACTIVATION VOLTAGE OF THE MOTOR
+#define kPWrist 12    //WEIRD
 #define TARGET_POSITION 1000
 #define INITIAL_POSITION_X 500
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -73,7 +73,7 @@ void setup()
     //Serial.print("in loop");
   }*/
   
-   /* Initialise the sensor */
+   // Initialise the sensor 
   if(!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
@@ -108,21 +108,22 @@ void setup()
 
   TCCR2B |= (1 << WGM22);
   TIMSK2 |= (1 << OCIE2A); // Output compare mode 
-  OCR2A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] ~ 500 Hz ocr2a = 250
+  OCR2A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] ~ 1 kHz ocr2a = 250
 
 // Setup Timer0. Set fot control frequency.
-  TCCR0B |= (1 << CS02); // Set prescaler as n = 64
+  TCCR0B |= (1 << CS02); // Set prescaler as n = 256
   TCCR0B &= ~(1 << CS01); 
   TCCR0B &= ~(1 << CS00);  
 
   TCCR0B |= (1 << WGM02);
   TIMSK0 |= (1 << OCIE0A); // Output compare mode 
-  OCR0A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] 
+  OCR0A = 125;             // Frequency = f_clock/[2*n(1+OCR2A)]  ~500 Hz ocr0a = 125 456hz imu
 
   sei();
 
 imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  
+Serial.println("ONE SEC!");
+  delay(1000);
   //read angles 
   xAngleInit = euler.x();
   yAngleInit = euler.y();
@@ -144,12 +145,14 @@ int controlLoopCounterPID = 0;
 void DoMeSomething() //every second
 {
   //Serial.print("controlLoopCounter=");
-  //Serial.println(controlLoopCounterIMU);
+ /*Serial.println(controlLoopCounterIMU);
   
- // Serial.println(interruptCounterTimer0);
-  //Serial.println(controlLoopCounterPID);
+  Serial.println(interruptCounterTimer0);
+  Serial.println(controlLoopCounterPID);
   //Serial.print("interruptCounter=");  
-  //Serial.println(interruptCounterTimer2);
+  Serial.println(interruptCounterTimer2);
+
+  */
   /*Serial.print("xAngle = ");
   Serial.print(xAngle);
   Serial.print("yAngle = ");
@@ -212,11 +215,11 @@ void PIDCode(){
     Serial.println(zAngle);*/
     
   //set limits to angles  
-    if(xAngle > 360){xAngle = xAngle %360;}
+    if(yAngle > 360){yAngle = yAngle %360;}
     if(zAngle > 360){zAngle = zAngle %360;}
 
   //get current position readings   
-    int currentPositionWrist = xAngle;
+    int currentPositionWrist = yAngle;
     int currentPositionForearm = zAngle;
 /* don't need
    //get angle differences
@@ -228,7 +231,7 @@ void PIDCode(){
     //int targetX = currentPositionWrist + angleDifferenceX*2.841;
     //int targetZ = currentPositionForearm + angleDifferenceZ*2.841;
     int targetZ = zAngleInit;
-
+    int targetY = yAngleInit;
     /*
     if(targetX > 1023){
       targetX = targetX -1023;
@@ -237,9 +240,9 @@ void PIDCode(){
       targetZ = targetZ -1023;
     }
    */
-    int outputX, outputZ;
+    int outputY, outputZ;
 
-    //wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
+    wristPID.pid(currentPositionWrist,targetY,kPWrist,outputY);
     //TESTING FOREARM
     forearmPID.pid(currentPositionForearm, targetZ, kPForearm, outputZ);
 
