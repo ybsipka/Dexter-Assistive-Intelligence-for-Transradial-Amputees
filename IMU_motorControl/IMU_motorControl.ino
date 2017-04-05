@@ -34,8 +34,11 @@ Motor_PinA - Motor_pinB - Ground - B - A
    Connect GROUND to common ground
          
 */    
+/*IMPORTANT *************************/
+/* FOREARM = Z AXIS WRIST = Y AXIS */
+
 /**************** VARIABLES *******************/
-#define kPForearm 2
+#define kPForearm 8
 #define kPWrist 4.5
 #define TARGET_POSITION 1000
 #define INITIAL_POSITION_X 500
@@ -59,7 +62,7 @@ int zAngleOld = 0;
 
 
 unsigned long timePassed, timeStart, timeEnd;
-
+int xAngleInit, yAngleInit, zAngleInit = 0;
 void setup()
 {
   Serial.begin(9600);
@@ -117,6 +120,19 @@ void setup()
   OCR0A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] 
 
   sei();
+
+imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  
+  //read angles 
+  xAngleInit = euler.x();
+  yAngleInit = euler.y();
+  zAngleInit = euler.z();
+  Serial.print("xAngle Initial = ");
+    Serial.print(xAngleInit);
+    Serial.print("yAngle Init = ");
+    Serial.print(yAngleInit);
+    Serial.print("zAngle Init = ");
+    Serial.println(zAngleInit);
   
 }
 
@@ -128,12 +144,12 @@ int controlLoopCounterPID = 0;
 void DoMeSomething() //every second
 {
   //Serial.print("controlLoopCounter=");
-  Serial.println(controlLoopCounterIMU);
+  //Serial.println(controlLoopCounterIMU);
   
-  Serial.println(interruptCounterTimer0);
-  Serial.println(controlLoopCounterPID);
+ // Serial.println(interruptCounterTimer0);
+  //Serial.println(controlLoopCounterPID);
   //Serial.print("interruptCounter=");  
-  Serial.println(interruptCounterTimer2);
+  //Serial.println(interruptCounterTimer2);
   /*Serial.print("xAngle = ");
   Serial.print(xAngle);
   Serial.print("yAngle = ");
@@ -177,10 +193,17 @@ void IMUCode(){
   
   //read angles 
   xAngle = euler.x();
-  //yAngle = euler.y();
+  yAngle = euler.y();
   zAngle = euler.z();
+    Serial.print("xAngle = ");
+    Serial.print(xAngle);
+    Serial.print("yAngle = ");
+    Serial.print(yAngle);
+    Serial.print("zAngle = ");
+    Serial.println(zAngle);
 }
 void PIDCode(){
+   
     /*Serial.print("xAngle = ");
     Serial.print(xAngle);
     Serial.print("yAngle = ");
@@ -193,38 +216,39 @@ void PIDCode(){
     if(zAngle > 360){zAngle = zAngle %360;}
 
   //get current position readings   
-    int currentPositionWrist = analogRead(wristPotPin);
-    int currentPositionForearm = analogRead(forearmPotPin);
-
+    int currentPositionWrist = xAngle;
+    int currentPositionForearm = zAngle;
+/* don't need
    //get angle differences
-    int angleDifferenceX = xAngleOld - xAngle;
-    int angleDifferenceY = yAngleOld - yAngle;
-    int angleDifferenceZ = zAngleOld - zAngle;
-
+    int angleDifferenceX = xAngleInit - xAngle;
+    int angleDifferenceY = yAngleInit - yAngle;
+    int angleDifferenceZ = zAngleInit - zAngle;
+*/
    //map IMU values to potentiometer values
-    int targetX = currentPositionWrist + angleDifferenceX*2.841;
-    int targetZ = currentPositionForearm + angleDifferenceZ*2.841;
-    
+    //int targetX = currentPositionWrist + angleDifferenceX*2.841;
+    //int targetZ = currentPositionForearm + angleDifferenceZ*2.841;
+    int targetZ = zAngleInit;
+
+    /*
     if(targetX > 1023){
       targetX = targetX -1023;
     }
     if(targetZ > 1023){
       targetZ = targetZ -1023;
     }
-   
-    int outputX;
-    int outputZ;
+   */
+    int outputX, outputZ;
 
-    wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
-    
+    //wristPID.pid(currentPositionWrist,targetX,kPWrist,outputX);
+    //TESTING FOREARM
     forearmPID.pid(currentPositionForearm, targetZ, kPForearm, outputZ);
 
-   
+   /*dont need
     //store old angles
     xAngleOld = xAngle; 
     yAngleOld = yAngle;
     zAngleOld = zAngle;  
-     
+     */
     //delay(BNO055_SAMPLERATE_DELAY_MS); 
 }
 
