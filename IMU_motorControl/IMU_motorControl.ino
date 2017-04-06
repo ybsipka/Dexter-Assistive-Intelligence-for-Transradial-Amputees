@@ -49,7 +49,7 @@
    Connect BIN2 to digital 52
    Connect PWMB to analog 13
   
- Written by Batu Sipka.
+ Written by Batu Sipka. Contributors -> Gabrielle O'Dell.
  
   * This software has been written for the Major Qualifying Project at Worcester Polytechnic Institute.
   * Dexter : An Assistive Intelligence for Transradial Amputees.
