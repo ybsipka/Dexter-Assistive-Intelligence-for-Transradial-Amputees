@@ -11,8 +11,8 @@
   *Holding Dexter in front of you* 
 
   * ↷ is determined as +Z.
-  * → is determined as +Y.
-  * ↑  is determined as +X.
+  * → is determined as +X.
+  * ↑  is determined as +Y.
  
  An Adafruit 9 DOF IMU was used for orientation and the SPH_PID library 
  for controlling a 6V high power Pololu 1000:1 Micrometal Gear Motor (1) and 
@@ -75,7 +75,7 @@
 #define BIN2 52
 #define PWMB 13
     
-/**************** CONSTANT VARIABLES *******************/
+/**************** VARIABLES *******************/
 #define kPForearm 8  //******** HAVE TO ADJUST THE GAIN SO THAT IT MATCHES THE ACTIVATION VOLTAGE OF THE MOTOR
 #define kPWrist 12    //WEIRD
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -185,6 +185,7 @@ void loop()
     PIDCode();
     controlLoopCounterPID++;
   }
+  
 }
 
 void IMUCode()
