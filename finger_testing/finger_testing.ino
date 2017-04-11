@@ -7,9 +7,9 @@
  ********************************************************/
 /********************* PINS ******************/
 //index
-#define AIN1 30
-#define AIN2 31
-#define PWMA 3
+#define AIN1 43
+#define AIN2 42
+#define PWMA 7
 
 //middle
 #define BIN1 32
@@ -29,7 +29,7 @@
 //thumb top
 #define AIN31 42
 #define AIN32 43
-#define PWM3A 7
+#define PWM3A 3
 
 #define MAX_OUT_CHARS 16
 
@@ -40,7 +40,7 @@ Motor_PinA - Motor_pinB - Ground - B - A
 */    
 
 /**************** VARIABLES *******************/
-#define kPIndex 4.5
+#define kPIndex 3.5
 #define kPMiddle 4.5
 #define kPRing 4.5
 #define kPThumbLeft 4.5
@@ -51,8 +51,8 @@ Motor_PinA - Motor_pinB - Ground - B - A
 #define TARGET_POSITION_THUMBLEFT 430
 #define TARGET_POSITION_THUMBTOP 850
 
-#define INDEX_STRAIGHT 170  // Previously 170 and 10
-#define INDEX_CURLED  15
+#define INDEX_STRAIGHT 530  // Previously 170 and 10
+#define INDEX_CURLED  400
 #define MIDDLE_STRAIGHT 210 // Previously 210 and 10
 #define MIDDLE_CURLED 15
 #define RING_STRAIGHT 210
@@ -114,13 +114,13 @@ int targetIndex;
    
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(38400);
 
-  attachInterrupt(indexFSRpin,indexInterrupt,FALLING);
-  attachInterrupt(middleFSRpin,middleInterrupt,FALLING);
+  //attachInterrupt(indexFSRpin,indexInterrupt,FALLING);
+  //attachInterrupt(middleFSRpin,middleInterrupt,FALLING);
   //attachInterrupt(ringFSRpin,ringInterrupt,FALLING);
   //attachInterrupt(thumbFSRpin,thumbInterrupt,FALLING);
-   targetIndex = INDEX_CURLED;
+   targetIndex = INDEX_STRAIGHT;
    targetMiddle = MIDDLE_CURLED; 
    targetRing = RING_STRAIGHT;  
    targetThumbLeft = LEFT_CYL;
@@ -134,32 +134,21 @@ void loop()
   while(true){
     
   //get current position readings   
-    int currentPositionIndex = analogRead(indexPotPin);
+    float currentPositionIndex = analogRead(indexPotPin);
     int currentPositionMiddle = analogRead(middlePotPin);
     int currentPositionRing = analogRead(ringPotPin);
     int currentPositionThumbLeft = analogRead(thumbTopPotPin);
     int currentPositionThumbTop = analogRead(thumbLeftPotPin);
-    
+
+    Serial.println(currentPositionIndex);
    int outputIndex;
    int outputMiddle;
    int outputRing;
    int outputLeft;
    int outputTop;
  
-  Serial.print(middleTouched);
-  Serial.print("   ");
-   if(middleTouched > 0){
-    targetMiddle = currentPositionMiddle;
-    middleTouched = 0;
-        Serial.print("MIDDLE TOUCHEDD!!!!!!!!!!!!!!!!!");
-
-   }
-   Serial.println(indexTouched);
-   if(indexTouched > 0){
-    targetIndex = currentPositionIndex;
-    indexTouched = 0;
-    Serial.print("INDEX TOUCHEDD!!!!!!!!!!!!!!!!!");
-   }
+  
+  
    /*
    int targetIndex = INDEX_CURLED;
    int targetMiddle = MIDDLE_CURLED; 
@@ -191,23 +180,14 @@ void loop()
    Serial.println(currentPositionThumbLeft);*/
    
    indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
-   middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
+   /*middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
   ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
    thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
    thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
-   
+   */
  
    }
 }
 
-void indexInterrupt(){
-  indexTouched++;
-}
-void middleInterrupt(){
-  middleTouched++;
-}void ringInterrupt(){
-  ringTouched++;
-}void thumbInterrupt(){
-  thumbTouched++;
-}
+
 

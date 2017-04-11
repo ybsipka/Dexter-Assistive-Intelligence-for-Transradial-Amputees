@@ -64,20 +64,23 @@
 #define thumbLeftPotPin 3
 #define thumbTopPotPin 4
 
-// Force Sensor Pins - don't think we are gonna use interrupts
-//change them if you are using digitalPinToInterrupt()
-#define indexFSRpin 2 //21
-#define middleFSRpin 3 //20
-#define ringFSRpin 4 //19
-#define thumbFSRpin 5 //18
+// Force Sensor Pins
+#define indexFSRpinTop 5
+#define middleFSRpinTop 6
+#define ringFSRpinTop 7
+#define thumbFSRpinTop 8
+#define indexFSRpinDown 9
+#define middleFSRpinDown 10
+#define ringFSRpinDown 11
+#define thumbFSRpinDown 12
 
 // Touch Sensor Pins
 #define touchOne 0 //digital Pin 2
 #define touchTwo 1 // digital Pin 3
 
 // Closed and opened grasp values
-#define TP_INDEX_CLOSED 50
-#define TP_INDEX_OPENED 50
+#define TP_INDEX_CLOSED 400
+#define TP_INDEX_OPENED 540
 #define TP_MIDDLE_CLOSED 150
 #define TP_MIDDLE_OPENED 150
 #define TP_RING_CLOSED 150
@@ -107,17 +110,14 @@ int interruptCounterTimer2 = 0;
 int controlLoopCounterIMU = 0;
 int controlLoopCounterPID = 0;
 
+/* Setup Loop */
 void setup()
 {
   // Initialize the Serial Monitor at 9600 Baud Rate
   Serial.begin(9600);
 
   // Set Potentiometer Pins to Inputs
-  pinMode(indexPotPin, INPUT);
-  pinMode(middlePotPin, INPUT);
-  pinMode(ringPotPin, INPUT);
-  pinMode(thumbLeftPotPin, INPUT);
-  pinMode(thumbTopPotPin, INPUT);
+  pinModeInitialize();
 
   // Check if the IMU is connected
   IMU_check();
@@ -149,12 +149,7 @@ void setup()
   zAngleInit = euler.z();
 
   // Print the initial angles
-  Serial.print("xAngle Initial = ");
-  Serial.print(xAngleInit);
-  Serial.print("yAngle Init = ");
-  Serial.print(yAngleInit);
-  Serial.print("zAngle Init = ");
-  Serial.println(zAngleInit);
+  printInitialAngles();
 
 }
 
@@ -170,11 +165,13 @@ ISR(TIMER0_COMPA_vect)
   interruptCounterTimer0++;
 }
 
+/* Main Loop */
 void loop()
 {
 
 }
 
+/* The function for grasping an object */
 void grasping()
 {
   // Get current position readings
@@ -205,6 +202,7 @@ void grasping()
  thumbTopPID.pid(currentPositionThumbTop,TP_THUMBTOP_CLOSED,kPThumbTop,outputTop);
 }
 
+/* The function for the self balancing mode */
 void selfBalance()
 {
   // Set limits to angles
@@ -224,6 +222,7 @@ void selfBalance()
   forearmPID.pid(currentPositionForearm, targetZ, kPForearm, outputZ);
 }
 
+/* Reads the IMU */
 void IMU_read()
 {
   // Read angles
@@ -231,14 +230,31 @@ void IMU_read()
   xAngle = euler.x();
   yAngle = euler.y();
   zAngle = euler.z();
-  Serial.print("xAngle = ");
-  Serial.print(xAngle);
-  Serial.print("yAngle = ");
-  Serial.print(yAngle);
-  Serial.print("zAngle = ");
-  Serial.println(zAngle);
+
+  // Print angles
+  printAngles();
 }
 
+/* Initializes pinModes */
+void pinModeInitialize()
+{
+  // Set Potentiometer Pins to Inputs
+  pinMode(indexPotPin, INPUT);
+  pinMode(middlePotPin, INPUT);
+  pinMode(ringPotPin, INPUT);
+  pinMode(thumbLeftPotPin, INPUT);
+  pinMode(thumbTopPotPin, INPUT);
+  pinMode(indexFSRpinTop, INPUT);
+  pinMode(middleFSRpinTop, INPUT);
+  pinMode(ringFSRpinTop, INPUT);
+  pinMode(thumbFSRpinTop, INPUT);
+  pinMode(indexFSRpinBottom, INPUT);
+  pinMode(middleFSRpinBottom, INPUT);
+  pinMode(ringFSRpinBottom, INPUT);
+  pinMode(thumbFSRpinBottom, INPUT);
+}
+
+/* Checks if IMU is connected via SCL && SDA */
 void IMU_check()
 {
   // Check if the IMU is connected
@@ -250,6 +266,7 @@ void IMU_check()
   }
 }
 
+/* Sets up Timer2 */
 void timer2_setup()
 {
   TCCR2B &= ~(1 << CS22); // Set prescaler as n = 64
@@ -260,6 +277,8 @@ void timer2_setup()
   TIMSK2 |= (1 << OCIE2A); // Output compare mode
   OCR2A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] ~ 1 kHz ocr2a = 250
 }
+
+/* Sets up Timer0 */
 void timer0_setup()
 {
   TCCR0B |= (1 << CS02); // Set prescaler as n = 256
@@ -271,6 +290,29 @@ void timer0_setup()
   OCR0A = 125;             // Frequency = f_clock/[2*n(1+OCR2A)]  ~500 Hz ocr0a = 125 456hz imu
 }
 
+/* Prints Initial Angles */
+void printInitialAngles()
+{
+  Serial.print("xAngle Initial = ");
+  Serial.print(xAngleInit);
+  Serial.print("yAngle Init = ");
+  Serial.print(yAngleInit);
+  Serial.print("zAngle Init = ");
+  Serial.println(zAngleInit);
+}
+
+/* Prints Angles */
+void printAngles()
+{
+  Serial.print("xAngle = ");
+  Serial.print(xAngle);
+  Serial.print("yAngle = ");
+  Serial.print(yAngle);
+  Serial.print("zAngle = ");
+  Serial.println(zAngle);
+}
+
+/* To check if the interrupts are running at the rate wanted */
 void DoMeSomething() // Fire every second
 {
   /*Serial.print("controlLoopCounter=");
@@ -287,10 +329,12 @@ void DoMeSomething() // Fire every second
   controlLoopCounterPID = -1;
 }
 
+/* Locks the hand for grasp */
 void lock(){
 
 }
 
+/* Releases the grasp */
 void release(){
 
 }
