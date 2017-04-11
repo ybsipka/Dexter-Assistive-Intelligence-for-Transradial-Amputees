@@ -112,8 +112,8 @@
 #define kPIndex 3
 #define kPMiddle 3
 #define kPRing 3
-#define kPThumbLeft 3
-#define kPThumbTop 3
+#define kPThumbLeft 2
+#define kPThumbTop 2
 
 // Potentiometer Pins
 #define indexPotPin 0
@@ -124,12 +124,12 @@
 
 // Force Sensor Pins
 #define indexFSRpinTop 5
-#define middleFSRpinTop 6
-#define ringFSRpinTop 7
-#define thumbFSRpinTop 8
-#define indexFSRpinBottom 9
-#define middleFSRpinBottom 10
-#define ringFSRpinBottom 11
+#define middleFSRpinTop 7
+#define ringFSRpinTop 9
+#define thumbFSRpinTop 11
+#define indexFSRpinBottom 6
+#define middleFSRpinBottom 8
+#define ringFSRpinBottom 10
 
 
 // Touch Sensor Pins
@@ -139,14 +139,14 @@
 // Closed and opened grasp values
 #define TP_INDEX_CLOSED 400
 #define TP_INDEX_OPENED 540
-#define TP_MIDDLE_CLOSED 150
-#define TP_MIDDLE_OPENED 150
-#define TP_RING_CLOSED 150
-#define TP_RING_OPENED 150
-#define TP_THUMBLEFT_CLOSED 150
-#define TP_THUMBLEFT_OPENED 150
-#define TP_THUMBTOP_CLOSED 150
-#define TP_THUMBTOP_OPENED 150
+#define TP_MIDDLE_CLOSED 430
+#define TP_MIDDLE_OPENED 500
+#define TP_RING_CLOSED 510
+#define TP_RING_OPENED 550
+#define TP_THUMBLEFT_CLOSED 400
+#define TP_THUMBLEFT_OPENED 550
+#define TP_THUMBTOP_CLOSED 400
+#define TP_THUMBTOP_OPENED 500
 
 // Force Sensor Thresholds
 #define indexFSRTopThreshold 300
@@ -229,6 +229,9 @@ void setup()
   printInitialAngles();
 
   readPotsAndFSRs();
+  targetCounter = 0;
+  Serial.println("Target Counter set to 0");
+  delay(500);
 }
 
 // Motor control interrupt timer. Expected at ~1.0 kHz.
@@ -243,10 +246,7 @@ ISR(TIMER0_COMPA_vect)
   interruptCounterTimer0++;
 }
 
-/* Main Loop */
-
-
-  
+/* Main Loop */  
 void loop()
 {
   switch(MODE)
@@ -254,6 +254,8 @@ void loop()
     case GRASP: // Grasping MODE
       while(targetCounter == 0){
         targetCounter = 1;
+        Serial.println("Target Counter set to 1");
+        delay(500);
       }
       // When Timer0 fires
         if(controlLoopCounterIMU < interruptCounterTimer0)
@@ -297,11 +299,16 @@ void grasping()
   {
     setTarget2Closed();
     targetCounter = 2;
+    Serial.println("Target Counter set to 2");
+    delay(500);
   }
 
   if(indexFSRTopPos > indexFSRTopThreshold || indexFSRBottomPos > indexFSRBottomThreshold)
   {
-    targetIndex = currentPositionIndex;   
+    targetIndex = currentPositionIndex;
+    Serial.println("Target set to current position");
+    delay(500);
+       
   }
   if(middleFSRTopPos > middleFSRTopThreshold || middleFSRBottomPos > middleFSRBottomThreshold)
   {
@@ -316,35 +323,43 @@ void grasping()
  indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
  middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
  ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
- thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
- thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
+ //thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
+ //thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
 }
 
 void setTarget2Closed()
 {
   targetIndex = TP_INDEX_CLOSED;
+  Serial.println("Target set to CLOSED");
+  delay(500);
   targetMiddle = TP_MIDDLE_CLOSED;
   targetRing = TP_RING_CLOSED;
-  targetThumbLeft = TP_THUMBLEFT_CLOSED;
-  targetThumbTop =TP_THUMBTOP_CLOSED; 
+  //targetThumbLeft = TP_THUMBLEFT_CLOSED;
+  //targetThumbTop =TP_THUMBTOP_CLOSED; 
 }
 
 void setTarget2Opened()
 {
   targetIndex = TP_INDEX_OPENED;
+  Serial.println("Target set to OPENED");
+  delay(500);
   targetMiddle = TP_MIDDLE_OPENED;
   targetRing = TP_RING_OPENED;
-  targetThumbLeft = TP_THUMBLEFT_OPENED;
-  targetThumbTop =TP_THUMBTOP_OPENED; 
+  //targetThumbLeft = TP_THUMBLEFT_OPENED;
+  //targetThumbTop =TP_THUMBTOP_OPENED; 
 }
 
 void readPots()
 {
   currentPositionIndex = analogRead(indexPotPin);
   currentPositionMiddle = analogRead(middlePotPin);
+  Serial.print("M Pot = ");
+  Serial.print(currentPositionIndex);
+  Serial.print("Target = ");
+  Serial.println(targetIndex);
   currentPositionRing = analogRead(ringPotPin);
-  currentPositionThumbLeft = analogRead(thumbTopPotPin);
-  currentPositionThumbTop = analogRead(thumbLeftPotPin);
+  //currentPositionThumbLeft = analogRead(thumbTopPotPin);
+  //currentPositionThumbTop = analogRead(thumbLeftPotPin);
 }
 void readForceSensors()
 {
@@ -372,8 +387,8 @@ void releasingGrasp()
  indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
  middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
  ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
- thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
- thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
+ //thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
+ //thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
 }
 
 /* The function for the self balancing mode */
@@ -425,7 +440,6 @@ void pinModeInitialize()
   pinMode(indexFSRpinBottom, INPUT);
   pinMode(middleFSRpinBottom, INPUT);
   pinMode(ringFSRpinBottom, INPUT);
-  pinMode(thumbFSRpinBottom, INPUT);
 }
 
 /* Checks if IMU is connected via SCL && SDA */
@@ -506,7 +520,11 @@ void DoMeSomething() // Fire every second
 /* Locks the hand for grasp */
 void lockJoints(){
   Serial.println("Lock Joints");
+  targetCounter = 0;
+  Serial.println("Target Counter set to 0");
+  delay(500);
   MODE = GRASP;
+  
 }
 
 /* Releases the grasp */
