@@ -109,44 +109,45 @@
 // P constants for motor control
 #define kPForearm 8  //******** HAVE TO ADJUST THE GAIN SO THAT IT MATCHES THE ACTIVATION VOLTAGE OF THE MOTOR
 #define kPWrist 12   //WEIRD
-#define kPIndex 3
-#define kPMiddle 3
-#define kPRing 3
+#define kPIndex 4.5
+#define kPMiddle 4.5
+#define kPRing 4.5
 #define kPThumbLeft 2
-#define kPThumbTop 2
+#define kPThumbTop 6    //change before testing
 
 // Potentiometer Pins
 #define indexPotPin 0
 #define middlePotPin 1
 #define ringPotPin 2
-#define thumbLeftPotPin 3
-#define thumbTopPotPin 4
+#define thumbLeftPotPin 4
+#define thumbTopPotPin 3
+#define wristPotPin 5
+#define forearmPotPin 6
 
 // Force Sensor Pins
-#define indexFSRpinTop 5
-#define middleFSRpinTop 7
-#define ringFSRpinTop 9
-#define thumbFSRpinTop 11
-#define indexFSRpinBottom 6
-#define middleFSRpinBottom 8
-#define ringFSRpinBottom 10
-
+#define indexFSRpinTop 7
+#define indexFSRpinBottom 8
+#define middleFSRpinTop 9
+#define middleFSRpinBottom 10
+#define ringFSRpinTop 11
+#define ringFSRpinBottom 12
+#define thumbFSRpinTop 13
 
 // Touch Sensor Pins
 #define touchOne 2 //digital Pin 2
 #define touchTwo 3 // digital Pin 3
 
 // Closed and opened grasp values
-#define TP_INDEX_CLOSED 400
-#define TP_INDEX_OPENED 540
-#define TP_MIDDLE_CLOSED 430
-#define TP_MIDDLE_OPENED 500
-#define TP_RING_CLOSED 510
-#define TP_RING_OPENED 550
-#define TP_THUMBLEFT_CLOSED 400
-#define TP_THUMBLEFT_OPENED 550
-#define TP_THUMBTOP_CLOSED 400
-#define TP_THUMBTOP_OPENED 500
+#define TP_INDEX_CLOSED 400 //✓
+#define TP_INDEX_OPENED 500 //✓
+#define TP_MIDDLE_CLOSED 345  //✓
+#define TP_MIDDLE_OPENED 445  //✓
+#define TP_RING_CLOSED 400  //✓
+#define TP_RING_OPENED 500  //✓
+#define TP_THUMBLEFT_CLOSED 600  //✓
+#define TP_THUMBLEFT_OPENED 740    //✓
+#define TP_THUMBTOP_CLOSED 500
+#define TP_THUMBTOP_OPENED 590
 
 // Force Sensor Thresholds
 #define indexFSRTopThreshold 300
@@ -165,15 +166,15 @@ Adafruit_BNO055 bno = Adafruit_BNO055();
 SPH_PID forearmPID(MD4_PWMA, MD4_AIN1, MD4_AIN2);
 SPH_PID wristPID(MD3_PWMA, MD3_AIN1, MD3_AIN2);
 SPH_PID thumbTopPID(MD3_PWMB, MD3_BIN1, MD3_BIN2);
-SPH_PID thumbLeftPID(MD2_PWMA, MD2_AIN1, MD2_AIN2);
+SPH_PID thumbLeftPID(MD2_PWMA, MD2_AIN2, MD2_AIN1); //reversed
 SPH_PID ringPID(MD2_PWMB, MD2_BIN1, MD2_BIN2);
-SPH_PID middlePID(MD1_PWMA, MD1_AIN1, MD1_AIN2);
+SPH_PID middlePID(MD1_PWMA, MD1_AIN2, MD1_AIN1); //inputs are reversed
 SPH_PID indexPID(MD1_PWMB, MD1_BIN1, MD1_BIN2);
 
 // Global Variables
 int xAngle,  zAngle, yAngle, xAngleInit, yAngleInit, zAngleInit, targetIndex, targetMiddle, targetRing, targetThumbLeft, targetThumbTop, targetWrist, targetForearm, outputIndex, outputMiddle, outputRing, outputLeft, outputTop, outputWrist, outputForearm;
 int currentPositionIndex,currentPositionMiddle,currentPositionRing,currentPositionThumbLeft,currentPositionThumbTop;
-int indexFSRTopPos ,indexFSRBottomPos,middleFSRTopPos,middleFSRBottomPos,ringFSRTopPos,ringFSRBottomPos;  
+int indexFSRTopPos ,indexFSRBottomPos,middleFSRTopPos,middleFSRBottomPos,ringFSRTopPos,ringFSRBottomPos,thumbFSRTopPos;  
 int interruptCounterTimer0 = 0;
 int interruptCounterTimer2 = 0;
 int controlLoopCounterIMU = 0;
@@ -186,7 +187,7 @@ int controlLoopCounterPID = 0;
 volatile int MODE = 0;
 int targetCounter = 0;
 
-
+int t= 0;
 /* Setup Loop */
 void setup()
 {
@@ -197,7 +198,7 @@ void setup()
   pinModeInitialize();
 
   // Check if the IMU is connected
-  //IMU_check();
+  IMU_check();
 
   // Set IMU crystal for external use
   bno.setExtCrystalUse(true);
@@ -249,39 +250,44 @@ ISR(TIMER0_COMPA_vect)
 /* Main Loop */  
 void loop()
 {
-  switch(MODE)
-  {
-    case GRASP: // Grasping MODE
-      while(targetCounter == 0){
-        targetCounter = 1;
-        Serial.println("Target Counter set to 1");
-        delay(500);
-      }
-      // When Timer0 fires
-        if(controlLoopCounterIMU < interruptCounterTimer0)
-         {
-           readPotsAndFSRs();
-           controlLoopCounterIMU++;
-         }
-      //When Timer2 fires
-      if(controlLoopCounterPID < interruptCounterTimer2)
-        {
-          grasping();
-          controlLoopCounterPID++;
-        }
-    break;
-    case RELEASEGRASP: // Releasing MODE
-      releasingGrasp();
-      targetCounter = 0;
-    break;
-    case SELFBALANCE: // Self Balancing MODE
-      //selfBalance();
-    break;
-    default: // initial MODE
-    //do nothing
-    Serial.println("Initial Mode or Something is wrong");
-    break;
-  }
+//  switch(MODE)
+//  {
+//    case GRASP: // Grasping MODE
+//      setTarget2Closed();
+//      readPotsAndFSRs();
+//      grasping();
+//      /*while(targetCounter == 0){
+//        targetCounter = 1;
+//        Serial.println("Target Counter set to 1");
+//        delay(500);
+//      }*/
+//      /*// When Timer0 fires
+//        if(controlLoopCounterIMU < interruptCounterTimer0)
+//         {
+//           readPotsAndFSRs();
+//           controlLoopCounterIMU++;
+//         }
+//      //When Timer2 fires
+//      if(controlLoopCounterPID < interruptCounterTimer2)
+//        {
+//          grasping();
+//          controlLoopCounterPID++;
+//        }*/    
+//      break;
+//    case RELEASEGRASP: // Releasing MODE
+//      setTarget2Opened();
+//      readPotsAndFSRs();
+//      releasingGrasp();
+//      //targetCounter = 0;
+//    break;
+//    case SELFBALANCE: // Self Balancing MODE
+//      //selfBalance();
+//    break;
+//    default: // initial MODE
+//    //do nothing
+//    Serial.println("Initial Mode or Something is wrong");
+//    break;
+//  }
 }
 
 void readPotsAndFSRs(){
@@ -295,20 +301,9 @@ void readPotsAndFSRs(){
 /* The function for grasping an object */
 void grasping()
 {
-  if (targetCounter == 1)
-  {
-    setTarget2Closed();
-    targetCounter = 2;
-    Serial.println("Target Counter set to 2");
-    delay(500);
-  }
-
   if(indexFSRTopPos > indexFSRTopThreshold || indexFSRBottomPos > indexFSRBottomThreshold)
   {
-    targetIndex = currentPositionIndex;
-    Serial.println("Target set to current position");
-    delay(500);
-       
+    targetIndex = currentPositionIndex;       
   }
   if(middleFSRTopPos > middleFSRTopThreshold || middleFSRBottomPos > middleFSRBottomThreshold)
   {
@@ -330,22 +325,18 @@ void grasping()
 void setTarget2Closed()
 {
   targetIndex = TP_INDEX_CLOSED;
-  Serial.println("Target set to CLOSED");
-  delay(500);
   targetMiddle = TP_MIDDLE_CLOSED;
   targetRing = TP_RING_CLOSED;
-  //targetThumbLeft = TP_THUMBLEFT_CLOSED;
-  //targetThumbTop =TP_THUMBTOP_CLOSED; 
+  targetThumbLeft = TP_THUMBLEFT_CLOSED;
+  targetThumbTop = TP_THUMBTOP_CLOSED; 
 }
 
 void setTarget2Opened()
 {
   targetIndex = TP_INDEX_OPENED;
-  Serial.println("Target set to OPENED");
-  delay(500);
   targetMiddle = TP_MIDDLE_OPENED;
   targetRing = TP_RING_OPENED;
-  //targetThumbLeft = TP_THUMBLEFT_OPENED;
+  targetThumbLeft = TP_THUMBLEFT_OPENED;
   //targetThumbTop =TP_THUMBTOP_OPENED; 
 }
 
@@ -353,13 +344,13 @@ void readPots()
 {
   currentPositionIndex = analogRead(indexPotPin);
   currentPositionMiddle = analogRead(middlePotPin);
-  Serial.print("M Pot = ");
-  Serial.print(currentPositionIndex);
-  Serial.print("Target = ");
-  Serial.println(targetIndex);
   currentPositionRing = analogRead(ringPotPin);
-  //currentPositionThumbLeft = analogRead(thumbTopPotPin);
-  //currentPositionThumbTop = analogRead(thumbLeftPotPin);
+  currentPositionThumbLeft = analogRead(thumbLeftPotPin);
+  currentPositionThumbTop = analogRead(thumbTopPotPin);
+ /* Serial.print("R Pot = ");
+  Serial.print(currentPositionRing);
+  Serial.print("Target = ");
+  Serial.println(targetRing);*/
 }
 void readForceSensors()
 {
@@ -369,20 +360,20 @@ void readForceSensors()
   middleFSRBottomPos = analogRead(middleFSRpinBottom);  
   ringFSRTopPos = analogRead(ringFSRpinTop);  
   ringFSRBottomPos = analogRead(ringFSRpinBottom);  
-  //int thumbFSRTopPos = analogRead(thumbFSRTopPin);  
+  Serial.print("M FSR TOP = ");
+  Serial.print(middleFSRTopPos);
+  Serial.print("M FSR BOTTOM= ");
+  Serial.print(middleFSRBottomPos);
+  Serial.print("R FSR TOP = ");
+  Serial.print(ringFSRTopPos);
   
+  thumbFSRTopPos = analogRead(thumbFSRpinTop);  
+  Serial.print("Thumb FSR= ");
+  Serial.println(thumbFSRTopPos);
 }
 /* The function for releasing the grasping*/
 void releasingGrasp()
 {
-  setTarget2Opened();
-  // Get current position readings
-  int currentPositionIndex = analogRead(indexPotPin);
-  int currentPositionMiddle = analogRead(middlePotPin);
-  int currentPositionRing = analogRead(ringPotPin);
-  int currentPositionThumbLeft = analogRead(thumbTopPotPin);
-  int currentPositionThumbTop = analogRead(thumbLeftPotPin);
-
  // Set Targets - Probably going to be max values Closed
  indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
  middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
@@ -457,13 +448,17 @@ void IMU_check()
 /* Sets up Timer2 */
 void timer2_setup()
 {
-  TCCR2B &= ~(1 << CS22); // Set prescaler as n = 64
+  /*TCCR2B &= ~(1 << CS22); // Set prescaler as n = 32
   TCCR2B |= (1 << CS21);
-  TCCR2B |= (1 << CS20);
+  TCCR2B |= (1 << CS20);*/
 
+  TCCR2B |= (1 << CS22); // Set prescaler as n = 64 
+  TCCR2B &= ~(1 << CS21);
+  TCCR2B &= ~(1 << CS20);
+  
   TCCR2B |= (1 << WGM22);
   TIMSK2 |= (1 << OCIE2A); // Output compare mode
-  OCR2A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] ~ 1 kHz ocr2a = 250
+  OCR2A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)] ~ 1 kHz ocr2a = 250 
 }
 
 /* Sets up Timer0 */
@@ -475,7 +470,7 @@ void timer0_setup()
 
   TCCR0B |= (1 << WGM02);
   TIMSK0 |= (1 << OCIE0A); // Output compare mode
-  OCR0A = 125;             // Frequency = f_clock/[2*n(1+OCR2A)]  ~500 Hz ocr0a = 125 456hz imu
+  OCR0A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)]  ~500 Hz ocr0a = 125 456hz imu ==> gotta check - might be every 4 ms = 250 hz
 }
 
 /* Prints Initial Angles */
@@ -503,32 +498,32 @@ void printAngles()
 /* To check if the interrupts are running at the rate wanted */
 void DoMeSomething() // Fire every second
 {
-  /*Serial.print("controlLoopCounter=");
-  Serial.println(controlLoopCounterIMU);
-  Serial.println(interruptCounterTimer0);
-  Serial.println(controlLoopCounterPID);
-  Serial.print("interruptCounter=");
-  Serial.println(interruptCounterTimer2);
-  */
+  //Serial.print("controlLoopCounter=");
+  //Serial.println(controlLoopCounterIMU);
+  //Serial.print("interruptCounter Timer0=");
+  //Serial.println(interruptCounterTimer0);
+ // Serial.println(controlLoopCounterPID);
+  //Serial.print("interruptCounter Timer 2=");
+  //Serial.println(interruptCounterTimer2);
+  
   // Reset values
   interruptCounterTimer0 = 0;
   interruptCounterTimer2 = 0;
-  controlLoopCounterIMU = -1;
-  controlLoopCounterPID = -1;
+  //controlLoopCounterIMU = -1;
+  //controlLoopCounterPID = -1;
 }
 
 /* Locks the hand for grasp */
 void lockJoints(){
-  Serial.println("Lock Joints");
-  targetCounter = 0;
-  Serial.println("Target Counter set to 0");
-  delay(500);
-  MODE = GRASP;
+  //Serial.println("Lock Joints");
+  targetCounter++;
+  Serial.println(targetCounter);
+  //MODE = GRASP;
   
 }
 
 /* Releases the grasp */
 void releaseGrasp(){
-  Serial.println("Release Grasp");
-  MODE = RELEASEGRASP;
+  //Serial.println("Release Grasp");
+  //MODE = RELEASEGRASP;
 }
