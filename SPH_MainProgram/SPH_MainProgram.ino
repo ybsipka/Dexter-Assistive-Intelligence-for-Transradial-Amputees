@@ -107,7 +107,7 @@
 
 /**************** VARIABLES *******************/
 // P constants for motor control
-#define kPForearm 8  //******** HAVE TO ADJUST THE GAIN SO THAT IT MATCHES THE ACTIVATION VOLTAGE OF THE MOTOR
+#define kPForearm 0.7  //******** HAVE TO ADJUST THE GAIN SO THAT IT MATCHES THE ACTIVATION VOLTAGE OF THE MOTOR
 #define kPWrist 12   //WEIRD
 #define kPIndex 4.5
 #define kPMiddle 4.5
@@ -188,6 +188,7 @@ volatile int MODE = 0;
 int targetCounter = 0;
 
 int t= 0;
+volatile int selfCount = 0;
 /* Setup Loop */
 void setup()
 {
@@ -249,45 +250,65 @@ ISR(TIMER0_COMPA_vect)
 
 /* Main Loop */  
 void loop()
+
 {
-//  switch(MODE)
-//  {
-//    case GRASP: // Grasping MODE
-//      setTarget2Closed();
-//      readPotsAndFSRs();
-//      grasping();
-//      /*while(targetCounter == 0){
-//        targetCounter = 1;
-//        Serial.println("Target Counter set to 1");
-//        delay(500);
-//      }*/
-//      /*// When Timer0 fires
-//        if(controlLoopCounterIMU < interruptCounterTimer0)
-//         {
-//           readPotsAndFSRs();
-//           controlLoopCounterIMU++;
-//         }
-//      //When Timer2 fires
-//      if(controlLoopCounterPID < interruptCounterTimer2)
-//        {
-//          grasping();
-//          controlLoopCounterPID++;
-//        }*/    
-//      break;
-//    case RELEASEGRASP: // Releasing MODE
-//      setTarget2Opened();
-//      readPotsAndFSRs();
-//      releasingGrasp();
-//      //targetCounter = 0;
-//    break;
-//    case SELFBALANCE: // Self Balancing MODE
-//      //selfBalance();
-//    break;
-//    default: // initial MODE
-//    //do nothing
-//    Serial.println("Initial Mode or Something is wrong");
-//    break;
-//  }
+  switch(MODE)
+  {
+    case GRASP: // Grasping MODE
+      setTarget2Closed();
+      readPotsAndFSRs();
+      grasping();
+      /*while(targetCounter == 0){
+        targetCounter = 1;
+        Serial.println("Target Counter set to 1");
+        delay(500);
+      }*/
+      /*// When Timer0 fires
+        if(controlLoopCounterIMU < interruptCounterTimer0)
+         {
+           readPotsAndFSRs();
+           controlLoopCounterIMU++;
+         }
+      //When Timer2 fires
+      if(controlLoopCounterPID < interruptCounterTimer2)
+        {
+          grasping();
+          controlLoopCounterPID++;
+        }*/    
+      break;
+    case RELEASEGRASP: // Releasing MODE
+      setTarget2Opened();
+      readPotsAndFSRs();
+      releasingGrasp();
+      //targetCounter = 0;
+    break;
+    case SELFBALANCE: // Self Balancing MODE
+    if(selfCount == 1){
+    //Initialize it
+    // Read initial angles and keep them
+     Serial.println("Getting Angles..");
+     
+      imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+      xAngleInit = euler.x();
+      yAngleInit = euler.y();
+      zAngleInit = euler.z();
+      delay(200000);
+      Serial.println("Setting up the self balancing mode");
+      delay(200000);
+      printInitialAngles();
+      Serial.println("Starting..");
+      delay(200000);
+      selfCount = 2;
+    }
+    //Serial.println("Self balancing mode");
+      IMU_read();
+      selfBalance();
+    break;
+    default: // initial MODE
+    //do nothing
+    Serial.println("Initial Mode or Something is wrong");
+    break;
+  }
 }
 
 void readPotsAndFSRs(){
@@ -398,7 +419,7 @@ void selfBalance()
   int targetForearm = zAngleInit;
 
   // Call the PID library
-  wristPID.pid(currentPositionWrist,targetWrist,kPWrist,outputWrist);
+  //wristPID.pid(currentPositionWrist,targetWrist,kPWrist,outputWrist);
   forearmPID.pid(currentPositionForearm, targetForearm, kPForearm, outputForearm);
 }
 
@@ -516,14 +537,15 @@ void DoMeSomething() // Fire every second
 /* Locks the hand for grasp */
 void lockJoints(){
   //Serial.println("Lock Joints");
-  targetCounter++;
-  Serial.println(targetCounter);
-  //MODE = GRASP;
-  
+  //targetCounter++;
+  //Serial.println(targetCounter);
+  //selfCount = 1;
+  //MODE = SELFBALANCE;
 }
 
 /* Releases the grasp */
 void releaseGrasp(){
   //Serial.println("Release Grasp");
-  //MODE = RELEASEGRASP;
+  selfCount = 1;
+  MODE = SELFBALANCE;
 }
