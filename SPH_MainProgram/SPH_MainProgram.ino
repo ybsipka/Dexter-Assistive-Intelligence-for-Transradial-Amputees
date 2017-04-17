@@ -1,3 +1,4 @@
+
 /*
   Main Program for Dexter: An Assistive Intelligence for Transradial Amputees
 
@@ -107,11 +108,11 @@
 
 /**************** VARIABLES *******************/
 // P constants for motor control
-#define kPForearm 0.7  //******** HAVE TO ADJUST THE GAIN SO THAT IT MATCHES THE ACTIVATION VOLTAGE OF THE MOTOR
-#define kPWrist 12   //WEIRD
-#define kPIndex 4.5
-#define kPMiddle 4.5
-#define kPRing 4.5
+#define kPForearm 6  //******** HAVE TO ADJUST THE GAIN SO THAT IT MATCHES THE ACTIVATION VOLTAGE OF THE MOTOR
+#define kPWrist 20   //WEIRD
+#define kPIndex 9
+#define kPMiddle 15
+#define kPRing 6.5
 #define kPThumbLeft 2
 #define kPThumbTop 6    //change before testing
 
@@ -140,10 +141,10 @@
 // Closed and opened grasp values
 #define TP_INDEX_CLOSED 400 //✓
 #define TP_INDEX_OPENED 500 //✓
-#define TP_MIDDLE_CLOSED 345  //✓
-#define TP_MIDDLE_OPENED 445  //✓
-#define TP_RING_CLOSED 400  //✓
-#define TP_RING_OPENED 500  //✓
+#define TP_MIDDLE_CLOSED 350  //✓
+#define TP_MIDDLE_OPENED 450  //✓
+#define TP_RING_CLOSED 385  //✓
+#define TP_RING_OPENED 485  //✓
 #define TP_THUMBLEFT_CLOSED 600  //✓
 #define TP_THUMBLEFT_OPENED 740    //✓
 #define TP_THUMBTOP_CLOSED 500
@@ -163,11 +164,11 @@ Adafruit_BNO055 bno = Adafruit_BNO055();
 #define BNO055_SAMPLERATE_DELAY_MS (100)
 
 // Instantiate PID library - SPH_PID(PWM,IN1,IN2) ----
-SPH_PID forearmPID(MD4_PWMA, MD4_AIN1, MD4_AIN2);
-SPH_PID wristPID(MD3_PWMA, MD3_AIN1, MD3_AIN2);
+SPH_PID forearmPID(MD4_PWMA, MD4_AIN2, MD4_AIN1);
+SPH_PID wristPID(MD3_PWMA, MD3_AIN2, MD3_AIN1);
 SPH_PID thumbTopPID(MD3_PWMB, MD3_BIN1, MD3_BIN2);
 SPH_PID thumbLeftPID(MD2_PWMA, MD2_AIN2, MD2_AIN1); //reversed
-SPH_PID ringPID(MD2_PWMB, MD2_BIN1, MD2_BIN2);
+SPH_PID ringPID(MD2_PWMB, MD2_BIN2, MD2_BIN1);
 SPH_PID middlePID(MD1_PWMA, MD1_AIN2, MD1_AIN1); //inputs are reversed
 SPH_PID indexPID(MD1_PWMB, MD1_BIN1, MD1_BIN2);
 
@@ -214,21 +215,21 @@ void setup()
   cli();
 
   // Setup Timer2. Set for control loop frequency.
-  timer2_setup();
+  //timer2_setup();
 
   // Setup Timer0. Set fot sensor feedback frequency.
-  timer0_setup();
+  //timer0_setup();
 
   sei();
 
-  // Read initial angles and keep them
-  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  xAngleInit = euler.x();
-  yAngleInit = euler.y();
-  zAngleInit = euler.z();
-
-  // Print the initial angles
-  printInitialAngles();
+//  // Read initial angles and keep them
+//  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+//  xAngleInit = euler.x();
+//  yAngleInit = euler.y();
+//  zAngleInit = euler.z();
+//
+//  // Print the initial angles
+//  printInitialAngles();
 
   readPotsAndFSRs();
   targetCounter = 0;
@@ -236,17 +237,17 @@ void setup()
   delay(500);
 }
 
-// Motor control interrupt timer. Expected at ~1.0 kHz.
-ISR(TIMER2_COMPA_vect)
-{
-  interruptCounterTimer2++;
-}
-
-// Sensor feedback loop goes here. Expected at ~500 Hz.
-ISR(TIMER0_COMPA_vect)
-{
-  interruptCounterTimer0++;
-}
+//// Motor control interrupt timer. Expected at ~1.0 kHz.
+//ISR(TIMER2_COMPA_vect)
+//{
+//  interruptCounterTimer2++;
+//}
+//
+//// Sensor feedback loop goes here. Expected at ~500 Hz.
+//ISR(TIMER0_COMPA_vect)
+//{
+//  interruptCounterTimer0++;
+//}
 
 /* Main Loop */  
 void loop()
@@ -255,31 +256,49 @@ void loop()
   switch(MODE)
   {
     case GRASP: // Grasping MODE
-      setTarget2Closed();
+    Serial.println("Close Grasp");
+    setTarget2Closed();
       readPotsAndFSRs();
-      grasping();
+    grasping();
+//    // When Timer0 fires
+//        if(controlLoopCounterIMU < interruptCounterTimer0)
+//         {
+//          
+//           controlLoopCounterIMU++;
+//         }
+//      //When Timer2 fires
+//      if(controlLoopCounterPID < interruptCounterTimer2)
+//        {
+//           
+//          controlLoopCounterPID++;
+//        }  
+      
+     
       /*while(targetCounter == 0){
         targetCounter = 1;
         Serial.println("Target Counter set to 1");
         delay(500);
       }*/
-      /*// When Timer0 fires
-        if(controlLoopCounterIMU < interruptCounterTimer0)
-         {
-           readPotsAndFSRs();
-           controlLoopCounterIMU++;
-         }
-      //When Timer2 fires
-      if(controlLoopCounterPID < interruptCounterTimer2)
-        {
-          grasping();
-          controlLoopCounterPID++;
-        }*/    
+      
       break;
     case RELEASEGRASP: // Releasing MODE
+    Serial.println("Open Grasp");
+//     if(controlLoopCounterIMU < interruptCounterTimer0)
+//         {
+//         setTarget2Opened();
+//      readPotsAndFSRs();
+//           controlLoopCounterIMU++;
+//         }
+//      //When Timer2 fires
+//      if(controlLoopCounterPID < interruptCounterTimer2)
+//        {
+//           releasingGrasp();
+//          controlLoopCounterPID++;
+//        }  
+      
       setTarget2Opened();
       readPotsAndFSRs();
-      releasingGrasp();
+    releasingGrasp();
       //targetCounter = 0;
     break;
     case SELFBALANCE: // Self Balancing MODE
@@ -289,20 +308,37 @@ void loop()
      Serial.println("Getting Angles..");
      
       imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-      xAngleInit = euler.x();
+      xAngleInit = euler.x() +180;
+      // Set limits to angles
       yAngleInit = euler.y();
       zAngleInit = euler.z();
-      delay(200000);
+  if(xAngleInit > 360){xAngleInit = xAngleInit %360;}
+  if(zAngleInit > 360){zAngle = zAngleInit %360;}
+      
+      delay(1000);
       Serial.println("Setting up the self balancing mode");
-      delay(200000);
+      delay(1000);
       printInitialAngles();
       Serial.println("Starting..");
-      delay(200000);
+      delay(1000);
       selfCount = 2;
     }
-    //Serial.println("Self balancing mode");
-      IMU_read();
-      selfBalance();
+
+     IMU_read();
+     selfBalance();
+//    // When Timer0 fires
+//        if(controlLoopCounterIMU < interruptCounterTimer0)
+//         {
+//           IMU_read();
+//           controlLoopCounterIMU++;
+//         }
+//      //When Timer2 fires
+//      if(controlLoopCounterPID < interruptCounterTimer2)
+//        {
+//          selfBalance();
+//          controlLoopCounterPID++;
+//        }      
+      
     break;
     default: // initial MODE
     //do nothing
@@ -336,10 +372,10 @@ void grasping()
   }
   
  // Set Targets - Probably going to be max values Closed
- indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
- middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
- ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
- //thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
+ //indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
+ //middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
+ //ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
+ thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
  //thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
 }
 
@@ -381,25 +417,22 @@ void readForceSensors()
   middleFSRBottomPos = analogRead(middleFSRpinBottom);  
   ringFSRTopPos = analogRead(ringFSRpinTop);  
   ringFSRBottomPos = analogRead(ringFSRpinBottom);  
-  Serial.print("M FSR TOP = ");
+ /* Serial.print("M FSR TOP = ");
   Serial.print(middleFSRTopPos);
   Serial.print("M FSR BOTTOM= ");
   Serial.print(middleFSRBottomPos);
   Serial.print("R FSR TOP = ");
-  Serial.print(ringFSRTopPos);
-  
+  Serial.print(ringFSRTopPos);*/
   thumbFSRTopPos = analogRead(thumbFSRpinTop);  
-  Serial.print("Thumb FSR= ");
-  Serial.println(thumbFSRTopPos);
 }
 /* The function for releasing the grasping*/
 void releasingGrasp()
 {
  // Set Targets - Probably going to be max values Closed
- indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
- middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
- ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
- //thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
+ //indexPID.pid(currentPositionIndex,targetIndex,kPIndex,outputIndex);
+ //middlePID.pid(currentPositionMiddle,targetMiddle,kPMiddle,outputMiddle);
+ //ringPID.pid(currentPositionRing,targetRing,kPRing,outputRing);
+ thumbLeftPID.pid(currentPositionThumbLeft,targetThumbLeft,kPThumbLeft,outputLeft);
  //thumbTopPID.pid(currentPositionThumbTop,targetThumbTop,kPThumbTop,outputTop);
 }
 
@@ -407,20 +440,36 @@ void releasingGrasp()
 void selfBalance()
 {
   // Set limits to angles
-  if(yAngle > 360){yAngle = yAngle %360;}
+  if(xAngle > 360){xAngle = xAngle %360;}
   if(zAngle > 360){zAngle = zAngle %360;}
 
-  // Get current orientation readings
-  int currentPositionWrist = yAngle;
-  int currentPositionForearm = zAngle;
 
   // Set target values to initial positions
-  int targetWrist = yAngleInit;
+  int targetWrist = xAngleInit;
   int targetForearm = zAngleInit;
 
+//  Serial.print("Target W = ");
+//  Serial.print(targetWrist);
+//  Serial.print("    Current Position W = ");
+//  Serial.print(xAngle);
+//  
+//  Serial.print("Target F = ");
+//  Serial.print(targetForearm);
+//  Serial.print("    Current Position = ");
+//  Serial.print(zAngle);
+int errorF = targetForearm - zAngle;
+  Serial.print("    error F = ");
+  Serial.print(errorF);
+  int errorW = targetWrist - xAngle;
+  Serial.print("    error W = ");
+  Serial.println(errorW);
+  
   // Call the PID library
-  //wristPID.pid(currentPositionWrist,targetWrist,kPWrist,outputWrist);
-  forearmPID.pid(currentPositionForearm, targetForearm, kPForearm, outputForearm);
+  wristPID.pid(xAngle,targetWrist,kPWrist,outputWrist);
+  //wristPID.runMotor(25,CLOCKWISE);
+  
+  forearmPID.pid(zAngle, targetForearm, kPForearm, outputForearm);
+  //forearmPID.runMotor(1,CLOCKWISE);
 }
 
 /* Reads the IMU */
@@ -428,12 +477,12 @@ void IMU_read()
 {
   // Read angles
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  xAngle = euler.x();
+  xAngle = euler.x() + 180;
   yAngle = euler.y();
   zAngle = euler.z();
 
   // Print angles
-  printAngles();
+  //printAngles();
 }
 
 /* Initializes pinModes */
@@ -469,13 +518,13 @@ void IMU_check()
 /* Sets up Timer2 */
 void timer2_setup()
 {
-  /*TCCR2B &= ~(1 << CS22); // Set prescaler as n = 32
+  TCCR2B &= ~(1 << CS22); // Set prescaler as n = 32
   TCCR2B |= (1 << CS21);
-  TCCR2B |= (1 << CS20);*/
+  TCCR2B |= (1 << CS20);
 
-  TCCR2B |= (1 << CS22); // Set prescaler as n = 64 
+  /*TCCR2B |= (1 << CS22); // Set prescaler as n = 64 
   TCCR2B &= ~(1 << CS21);
-  TCCR2B &= ~(1 << CS20);
+  TCCR2B &= ~(1 << CS20);*/
   
   TCCR2B |= (1 << WGM22);
   TIMSK2 |= (1 << OCIE2A); // Output compare mode
@@ -491,7 +540,7 @@ void timer0_setup()
 
   TCCR0B |= (1 << WGM02);
   TIMSK0 |= (1 << OCIE0A); // Output compare mode
-  OCR0A = 250;             // Frequency = f_clock/[2*n(1+OCR2A)]  ~500 Hz ocr0a = 125 456hz imu ==> gotta check - might be every 4 ms = 250 hz
+  OCR0A = 125;             // Frequency = f_clock/[2*n(1+OCR2A)]  ~500 Hz ocr0a = 125 456hz imu ==> gotta check - might be every 4 ms = 250 hz
 }
 
 /* Prints Initial Angles */
@@ -519,13 +568,13 @@ void printAngles()
 /* To check if the interrupts are running at the rate wanted */
 void DoMeSomething() // Fire every second
 {
-  //Serial.print("controlLoopCounter=");
-  //Serial.println(controlLoopCounterIMU);
-  //Serial.print("interruptCounter Timer0=");
-  //Serial.println(interruptCounterTimer0);
- // Serial.println(controlLoopCounterPID);
-  //Serial.print("interruptCounter Timer 2=");
-  //Serial.println(interruptCounterTimer2);
+//  Serial.print("controlLoopCounter=");
+//  Serial.println(controlLoopCounterIMU);
+//  Serial.print("interruptCounter Timer0=");
+//  Serial.println(interruptCounterTimer0);
+//  Serial.println(controlLoopCounterPID);
+//  Serial.print("interruptCounter Timer 2=");
+//  Serial.println(interruptCounterTimer2);
   
   // Reset values
   interruptCounterTimer0 = 0;
@@ -539,13 +588,13 @@ void lockJoints(){
   //Serial.println("Lock Joints");
   //targetCounter++;
   //Serial.println(targetCounter);
-  //selfCount = 1;
-  //MODE = SELFBALANCE;
+  selfCount = 1;
+  MODE = RELEASEGRASP;
 }
 
 /* Releases the grasp */
 void releaseGrasp(){
   //Serial.println("Release Grasp");
-  selfCount = 1;
-  MODE = SELFBALANCE;
+  //selfCount = 1;
+  MODE = GRASP;
 }
